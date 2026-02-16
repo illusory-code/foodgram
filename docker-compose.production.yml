@@ -1,0 +1,39 @@
+version: '3.3'
+volumes:
+  media:
+  pg_data:
+  static:
+services:
+  db:
+    image: postgres:13.10
+    env_file: .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  backend:
+    image: illusorycode/foodgram_backend
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - static:/backend_static
+      - media:/app/media
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram_backend.wsgi"] 
+  frontend:
+    image: illusorycode/foodgram_frontend
+    env_file: .env
+    build: ./frontend/
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+      - static:/frontend_static
+  gateway:
+    image: illusorycode/foodgram_gateway
+    env_file: .env
+    build: ./nginx/
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - static:/staticfiles
+      - media:/media
+    ports:
+      - 9001:80
