@@ -14,7 +14,7 @@ from recipes.models import (
     Tag,
 )
 from rest_framework import serializers
-from users.models import FollowRelationship, UserAccount
+from users.models import FollowRelationship
 from users.validators import (
     validate_first_name,
     validate_full_name,
