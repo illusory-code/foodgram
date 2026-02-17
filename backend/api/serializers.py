@@ -10,6 +10,7 @@ from recipes.models import (
     Ingredient,
     Recipe,
     RecipeComponent,
+    ShoppingItem,
     Tag,
 )
 from rest_framework import serializers
@@ -26,7 +27,7 @@ class ShoppingListSerializer(serializers.ModelSerializer):
     """Сериализатор списка покупок."""
 
     class Meta:
-        model = ShoppingList
+        model = ShoppingItem
         fields = ('user', 'recipe')
 
     def to_representation(self, instance):
@@ -207,7 +208,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return ShoppingListSerializer.objects.filter(
+            return ShoppingItem.objects.filter(
                 user=request.user,
                 recipe=obj
             ).exists()
