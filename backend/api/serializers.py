@@ -15,9 +15,8 @@ from recipes.models import (
 from rest_framework import serializers
 from users.models import FollowRelationship
 from users.validators import (
-    validate_first_name,
     validate_full_name,
-    validate_username_field,
+    validate_username_format,
 )
 
 User = get_user_model()
@@ -50,7 +49,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     first_name = serializers.CharField(
         max_length=NAME_MAX_LENGTH,
-        validators=[validate_full_name, validate_first_name],
+        validators=[validate_full_name],
         required=True,
     )
     last_name = serializers.CharField(
@@ -98,7 +97,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=False, allow_null=True)
     first_name = serializers.CharField(
         max_length=NAME_MAX_LENGTH,
-        validators=[validate_full_name, validate_first_name],
+        validators=[validate_full_name],
     )
     last_name = serializers.CharField(
         max_length=NAME_MAX_LENGTH,
