@@ -7,7 +7,7 @@ from foodgram_backend.constants import (
     INGREDIENT_AMOUNT_MIN,
     TEXT_LENGTH_MAX,
 )
-from users.models import User
+from users.models import UserAccount as User
 
 
 class TimestampMixin(models.Model):
