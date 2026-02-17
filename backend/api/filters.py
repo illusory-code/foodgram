@@ -25,6 +25,7 @@ class RecipeFilterSet(FilterSet):
         label='Автор рецепта',
     )
 
+
     class Meta:
         model = Recipe
         fields = ('tags', 'author')
