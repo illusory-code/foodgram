@@ -1,5 +1,4 @@
 import csv
-import os
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
@@ -36,7 +35,7 @@ class LoadDataCommand(BaseCommand):
         path = Path(filepath)
         if not path.exists():
             raise CommandError(f'Файл не найден: {filepath}')
-        
+
         with open(path, encoding='utf-8', newline='') as f:
             return list(csv.reader(f))
 
@@ -53,10 +52,13 @@ class LoadDataCommand(BaseCommand):
         for row in rows:
             if len(row) < 2:
                 continue
-            
+
             name, unit = row[0].strip(), row[1].strip()
-            
-            if skip_existing and Ingredient.objects.filter(name=name, unit=unit).exists():
+
+            if skip_existing and Ingredient.objects.filter(
+                name=name,
+                unit=unit
+            ).exists():
                 skipped_count += 1
                 continue
 
@@ -68,7 +70,8 @@ class LoadDataCommand(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Ингредиенты: создано {created_count}, пропущено {skipped_count}'
+                f'Ингредиенты: создано {created_count},'
+                f'пропущено {skipped_count}'
             )
         )
 
@@ -85,9 +88,9 @@ class LoadDataCommand(BaseCommand):
         for row in rows:
             if len(row) < 3:
                 continue
-            
+
             name, color, slug = row[0].strip(), row[1].strip(), row[2].strip()
-            
+
             if skip_existing and Tag.objects.filter(slug=slug).exists():
                 skipped_count += 1
                 continue
@@ -109,7 +112,7 @@ class LoadDataCommand(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.NOTICE('Начинаем импорт данных...'))
-        
+
         try:
             self._import_ingredients(
                 options['ingredients_file'],

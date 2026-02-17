@@ -15,7 +15,13 @@ class AccountAdmin(BaseUserAdmin):
             'fields': ('username', 'first_name', 'last_name', 'avatar')
         }),
         (_('Права доступа'), {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+            'fields': (
+                'is_active',
+                'is_staff',
+                'is_superuser',
+                'groups',
+                'user_permissions'
+            ),
         }),
         (_('Важные даты'), {'fields': ('last_login', 'date_joined')}),
     )
@@ -25,7 +31,14 @@ class AccountAdmin(BaseUserAdmin):
             'fields': ('email', 'username', 'password1', 'password2'),
         }),
     )
-    list_display = ('id', 'email', 'username', 'full_name', 'is_active', 'recipe_count')
+    list_display = (
+        'id',
+        'email',
+        'username',
+        'full_name',
+        'is_active',
+        'recipe_count'
+    )
     list_filter = ('is_active', 'is_staff', 'date_joined')
     search_fields = ('email', 'username', 'first_name', 'last_name')
     ordering = ('-date_joined',)
@@ -46,7 +59,11 @@ class FollowAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'follower', 'following', 'created_at', 'is_mutual')
     list_filter = ('created_at',)
-    search_fields = ('follower__email', 'following__email', 'follower__username')
+    search_fields = (
+        'follower__email',
+        'following__email',
+        'follower__username'
+    )
     autocomplete_fields = ('follower', 'following')
     date_hierarchy = 'created_at'
 

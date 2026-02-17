@@ -1,5 +1,4 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
@@ -46,12 +45,13 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
         blank=True,
         null=True,
     )
-    
     # Status fields
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,
-        help_text=_('Определяет, может ли пользователь входить в админ-панель.'),
+        help_text=_(
+            'Определяет, может ли пользователь входить в админ-панель.'
+        ),
     )
     is_active = models.BooleanField(
         _('active'),

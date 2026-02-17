@@ -13,7 +13,7 @@ class UserManager(BaseUserManager):
             raise ValueError(_('Email обязателен'))
         if not username:
             raise ValueError(_('Имя пользователя обязательно'))
-        
+
         email = self.normalize_email(email)
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)
@@ -32,8 +32,12 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         if extra_fields.get('is_staff') is not True:
-            raise ValueError(_('Суперпользователь должен иметь is_staff=True.'))
+            raise ValueError(_(
+                'Суперпользователь должен иметь is_staff=True.'
+            ))
         if extra_fields.get('is_superuser') is not True:
-            raise ValueError(_('Суперпользователь должен иметь is_superuser=True.'))
+            raise ValueError(_(
+                'Суперпользователь должен иметь is_superuser=True.'
+            ))
 
         return self._create_user(email, username, password, **extra_fields)

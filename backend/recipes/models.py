@@ -13,7 +13,7 @@ from users.models import User
 
 class TimestampMixin(models.Model):
     """Миксин для временных меток."""
-    
+
     created = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания'

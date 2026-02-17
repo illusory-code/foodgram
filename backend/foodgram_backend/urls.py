@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+
 def get_url_patterns():
     """Формирование URL-паттернов проекта."""
     patterns = [
@@ -26,6 +27,7 @@ def get_url_patterns():
         path('api/', include('api.urls', namespace='api')),
     ]
     return patterns
+
 
 def add_debug_urls(patterns):
     """Добавление URL для медиа-файлов в режиме отладки."""
@@ -35,5 +37,6 @@ def add_debug_urls(patterns):
             document_root=settings.MEDIA_ROOT
         )
     return patterns
+
 
 urlpatterns = add_debug_urls(get_url_patterns())

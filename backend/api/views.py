@@ -28,8 +28,8 @@ from api.serializers import (
     TagSerializer,
     UserDetailSerializer,
 )
+from api.views import Subscription
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from users.models import UserProfile
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -57,7 +57,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
 
         if user.is_authenticated:
-            cart_subquery = ShoppingList.objects.filter(
+            cart_subquery = ShoppingListSerializer.objects.filter(
                 user=user,
                 recipe=OuterRef('pk')
             )
@@ -92,15 +92,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
-            if FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
+            if FavoriteRecipe.objects.filter(
+                user=user,
+                recipe=recipe
+            ).exists():
                 return Response(
                     {'detail': 'Рецепт уже в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             FavoriteRecipe.objects.create(user=user, recipe=recipe)
             return Response(
-                CompactRecipeSerializer(recipe, context={'request': request}).data,
-                status=status.HTTP_201_CREATED
+                CompactRecipeSerializer(
+                    recipe,
+                    context={'request': request}).data,
+                    status=status.HTTP_201_CREATED
             )
 
         fav = FavoriteRecipe.objects.filter(user=user, recipe=recipe).first()
@@ -120,9 +125,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
-
         if request.method == 'POST':
-            obj, created = ShoppingList.objects.get_or_create(
+            obj, created = ShoShoppingListSerializerppingList.objects.get_or_create(
                 user=user,
                 recipe=recipe
             )
@@ -136,7 +140,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        item = ShoppingList.objects.filter(user=user, recipe=recipe).first()
+        item = ShoppingListSerializer.objects.filter(
+            user=user,
+            recipe=recipe
+        ).first()
         if item:
             item.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -220,7 +227,10 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class SubscriptionManageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class SubscriptionManageViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     """Управление подписками."""
 
     serializer_class = SubscriptionDetailSerializer

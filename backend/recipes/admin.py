@@ -27,7 +27,7 @@ class IngredientAdminConfig(admin.ModelAdmin):
 
 class RecipeComponentInline(admin.TabularInline):
     """Инлайн для ингредиентов рецепта."""
-    
+
     model = RecipeComponent
     extra = 1
     min_num = 1
@@ -77,7 +77,8 @@ class TagAdminConfig(admin.ModelAdmin):
 
     def display_color(self, obj):
         return format_html(
-            '<span style="background: {}; padding: 5px 10px; border-radius: 3px;">{}</span>',
+            '<span style="background: {};'
+            'padding: 5px 10px; border-radius: 3px;">{}</span>',
             obj.color_code,
             obj.color_code
         )
