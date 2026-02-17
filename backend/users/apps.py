@@ -10,4 +10,4 @@ class UserAccountsConfig(AppConfig):
 
     def ready(self):
         """Подключение обработчиков сигналов."""
-        import users.signals
+        pass

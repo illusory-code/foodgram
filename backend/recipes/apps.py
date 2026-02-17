@@ -10,4 +10,4 @@ class RecipeApplicationConfig(AppConfig):
 
     def ready(self):
         """Инициализация приложения."""
-        import recipes.signals
+        pass

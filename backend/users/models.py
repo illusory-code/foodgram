@@ -1,12 +1,21 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    PermissionsMixin,
+)
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from foodgram_backend.constants import TEXT_LENGTH_MEDIUM, TEXT_LENGTH_MAX
+from foodgram_backend.constants import (
+    TEXT_LENGTH_MAX,
+    TEXT_LENGTH_MEDIUM,
+)
 from users.managers import UserManager
-from users.validators import validate_full_name, validate_username_format
+from users.validators import (
+    validate_full_name,
+    validate_username_format,
+)
 
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
@@ -45,13 +54,12 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
         blank=True,
         null=True,
     )
+
     # Status fields
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,
-        help_text=_(
-            'Определяет, может ли пользователь входить в админ-панель.'
-        ),
+        help_text=_('Может ли пользователь входить в админ-панель.'),
     )
     is_active = models.BooleanField(
         _('active'),
@@ -60,7 +68,10 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
             'Отключите вместо удаления аккаунта.'
         ),
     )
-    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
+    date_joined = models.DateTimeField(
+        _('date joined'),
+        default=timezone.now
+    )
 
     objects = UserManager()
 

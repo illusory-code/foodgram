@@ -28,8 +28,14 @@ from api.serializers import (
     TagSerializer,
     UserDetailSerializer,
 )
-from api.views import Subscription
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import (
+    FavoriteItem,
+    Ingredient,
+    Recipe,
+    RecipeComponent,
+    ShoppingItem,
+    Tag,
+)
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -57,11 +63,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
 
         if user.is_authenticated:
-            cart_subquery = ShoppingListSerializer.objects.filter(
+            cart_subquery = ShoppingItem.objects.filter(
                 user=user,
                 recipe=OuterRef('pk')
             )
-            fav_subquery = FavoriteRecipe.objects.filter(
+            fav_subquery = FavoriteItem.objects.filter(
                 user=user,
                 recipe=OuterRef('pk')
             )
@@ -92,7 +98,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
-            if FavoriteRecipe.objects.filter(
+            if FavoriteItem.objects.filter(
                 user=user,
                 recipe=recipe
             ).exists():
@@ -100,15 +106,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'detail': 'Рецепт уже в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            FavoriteRecipe.objects.create(user=user, recipe=recipe)
+            FavoriteItem.objects.create(user=user, recipe=recipe)
             return Response(
                 CompactRecipeSerializer(
                     recipe,
-                    context={'request': request}).data,
-                    status=status.HTTP_201_CREATED
+                    context={'request': request}
+                ).data,
+                status=status.HTTP_201_CREATED
             )
 
-        fav = FavoriteRecipe.objects.filter(user=user, recipe=recipe).first()
+        fav = FavoriteItem.objects.filter(
+            user=user,
+            recipe=recipe
+        ).first()
         if fav:
             fav.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -125,8 +135,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
+
         if request.method == 'POST':
-            obj, created = ShoShoppingListSerializerppingList.objects.get_or_create(
+            obj, created = ShoppingItem.objects.get_or_create(
                 user=user,
                 recipe=recipe
             )
@@ -140,7 +151,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        item = ShoppingListSerializer.objects.filter(
+        item = ShoppingItem.objects.filter(
             user=user,
             recipe=recipe
         ).first()
@@ -159,13 +170,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user = request.user
-        items = RecipeIngredient.objects.filter(
-            recipe__in_cart__user=user
+        items = RecipeComponent.objects.filter(
+            recipe__shoppingitem__user=user
         ).values(
             'ingredient__name',
-            'ingredient__measurement_unit',
+            'ingredient__unit',
         ).annotate(
-            total=Sum('amount')
+            total=Sum('quantity')
         ).order_by('ingredient__name')
 
         lines = ['Список покупок:\n']
@@ -173,7 +184,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             lines.append(
                 f'{item["ingredient__name"]} — '
                 f'{item["total"]} '
-                f'{item["ingredient__measurement_unit"]}'
+                f'{item["ingredient__unit"]}'
             )
 
         buffer = io.StringIO()
@@ -239,7 +250,7 @@ class SubscriptionManageViewSet(
 
     def get_queryset(self):
         return User.objects.filter(
-            subscribers__subscriber=self.request.user
+            followers__follower=self.request.user
         )
 
 
@@ -307,15 +318,19 @@ class UserProfileViewSet(UserViewSet):
         user = request.user
 
         if request.method == 'POST':
-            if Subscription.objects.filter(
-                subscriber=user,
-                author=author
+            from users.models import FollowRelationship
+            if FollowRelationship.objects.filter(
+                follower=user,
+                following=author
             ).exists():
                 return Response(
                     {'error': 'Уже подписаны'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            Subscription.objects.create(subscriber=user, author=author)
+            FollowRelationship.objects.create(
+                follower=user,
+                following=author
+            )
             return Response(
                 AuthorSubscriptionSerializer(
                     author,
@@ -324,7 +339,11 @@ class UserProfileViewSet(UserViewSet):
                 status=status.HTTP_201_CREATED
             )
 
-        sub = Subscription.objects.filter(subscriber=user, author=author).first()
+        from users.models import FollowRelationship
+        sub = FollowRelationship.objects.filter(
+            follower=user,
+            following=author
+        ).first()
         if sub:
             sub.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -340,7 +359,9 @@ class UserProfileViewSet(UserViewSet):
         url_path='subscriptions'
     )
     def list_subscriptions(self, request):
-        qs = User.objects.filter(subscribers__subscriber=request.user)
+        qs = User.objects.filter(
+            followers__follower=request.user
+        )
         page = self.paginate_queryset(qs)
         serializer = SubscriptionDetailSerializer(
             page,
