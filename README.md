@@ -1,5 +1,5 @@
 [![Foodgram workflow](https://github.com/illusory-code/foodgram/actions/workflows/main.yml/badge.svg)](https://github.com/illusory-code/foodgram/actions/workflows/main.yml)
-## Проект: [Foodgram](https://foodgramkuzmin.zapto.org/)
+## Проект: [Foodgram](https://foodgram-kuzmin.ddns.net/)
 #### Итоговая работа *Яндекс.Практикум* (backend-часть)
 
 Foodgram — это онлайн-платформа, где пользователи могут делиться кулинарными рецептами, добавлять понравившиеся рецепты в избранное и следить за обновлениями других авторов. Для зарегистрированных пользователей доступна функция «Корзина покупок», которая автоматически формирует список необходимых ингредиентов для выбранных блюд.

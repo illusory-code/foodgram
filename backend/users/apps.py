@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class UserAccountsConfig(AppConfig):
+class UsersConfig(AppConfig):
     """Конфигурация приложения управления пользователями."""
 
     default_auto_field = 'django.db.models.BigAutoField'
