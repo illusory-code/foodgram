@@ -1,21 +1,11 @@
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
-from foodgram_backend.constants import (
-    TEXT_LENGTH_MAX,
-    TEXT_LENGTH_MEDIUM,
-)
+from foodgram_backend.constants import TEXT_LENGTH_MAX, TEXT_LENGTH_MEDIUM
 from users.managers import UserManager
-from users.validators import (
-    validate_full_name,
-    validate_username_format,
-)
+from users.validators import validate_full_name, validate_username_format
 
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
