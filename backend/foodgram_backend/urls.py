@@ -20,8 +20,8 @@ from django.contrib import admin
 from django.urls import include, path
 
 
-def get_url_patterns():
-    """Формирование URL-паттернов проекта."""
+def build_url_patterns():
+    """Формирование URL-конфигурации проекта."""
     patterns = [
         path('admin/', admin.site.urls),
         path('api/', include('api.urls', namespace='api')),
@@ -29,8 +29,8 @@ def get_url_patterns():
     return patterns
 
 
-def add_debug_urls(patterns):
-    """Добавление URL для медиа-файлов в режиме отладки."""
+def add_media_urls(patterns):
+    """Добавление URL для медиа-файлов в режиме разработки."""
     if settings.DEBUG:
         return patterns + static(
             settings.MEDIA_URL,
@@ -39,4 +39,4 @@ def add_debug_urls(patterns):
     return patterns
 
 
-urlpatterns = add_debug_urls(get_url_patterns())
+urlpatterns = add_media_urls(build_url_patterns())

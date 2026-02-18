@@ -19,14 +19,19 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-8&e5z+$akm+h4u7$rep(!b1ll3pc52a*j(zk4rw55@(7xcgmq@')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev-only')
 
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,89.169.182.159,foodgram-kuzmin.ddns.net').split(',')
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    'localhost,127.0.0.1,'
+    '89.169.182.159,'
+    'foodgram-kuzmin.ddns.net'
+).split(',')
 
-# Application definition
-DJANGO_CORE_APPS = [
+# Приложения Django
+CORE_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -35,7 +40,8 @@ DJANGO_CORE_APPS = [
     'django.contrib.staticfiles',
 ]
 
-EXTERNAL_APPS = [
+# Сторонние приложения
+THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
@@ -43,13 +49,14 @@ EXTERNAL_APPS = [
     'django_filters',
 ]
 
-PROJECT_APPS = [
+# Локальные приложения
+LOCAL_APPS = [
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
     'api.apps.ApiConfig',
 ]
 
-INSTALLED_APPS = DJANGO_CORE_APPS + EXTERNAL_APPS + PROJECT_APPS
+INSTALLED_APPS = CORE_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -82,9 +89,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
-SQLITE_MODE = os.getenv('USE_SQLITE', 'False').lower() == 'true'
+# База данных
+USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() == 'true'
 
-if SQLITE_MODE:
+if USE_SQLITE:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -139,7 +147,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://foodgram-kuzmin.ddns.net',
 ]
 
-# REST Framework configuration
+# Настройки REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -154,17 +162,17 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Custom user model
+# Кастомная модель пользователя
 AUTH_USER_MODEL = 'users.UserAccount'
 
-# Djoser configuration
+# Настройки Djoser
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user_create': 'api.serializers.UserCreateSerializer',
-        'user': 'api.serializers.UserDetailSerializer',
-        'current_user': 'api.serializers.UserDetailSerializer',
+        'user_create': 'api.serializers.RegisterUserSerializer',
+        'user': 'api.serializers.UserInfoSerializer',
+        'current_user': 'api.serializers.UserInfoSerializer',
     },
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],

@@ -5,23 +5,23 @@ from django.core.management.base import BaseCommand, CommandError
 from recipes.models import Ingredient, Tag
 
 
-class LoadDataCommand(BaseCommand):
-    """Команда для импорта данных из CSV-файлов."""
+class ImportDataCommand(BaseCommand):
+    """Команда импорта данных из CSV-файлов."""
 
-    help = 'Импортирует ингредиенты и теги из CSV в БД'
+    help = 'Загружает ингредиенты и теги из CSV в базу данных'
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--ingredients-file',
+            '--ingredients',
             type=str,
             default='data/ingredients.csv',
-            help='Путь к файлу с ингредиентами',
+            help='Путь к CSV-файлу с ингредиентами',
         )
         parser.add_argument(
-            '--tags-file',
+            '--tags',
             type=str,
             default='data/tags.csv',
-            help='Путь к файлу с тегами',
+            help='Путь к CSV-файлу с тегами',
         )
         parser.add_argument(
             '--skip-existing',
@@ -29,24 +29,24 @@ class LoadDataCommand(BaseCommand):
             help='Пропустить существующие записи',
         )
 
-    def _read_csv_file(self, filepath):
-        """Чтение CSV-файла с валидацией."""
+    def _parse_csv(self, filepath):
+        """Чтение и парсинг CSV-файла."""
         path = Path(filepath)
         if not path.exists():
             raise CommandError(f'Файл не найден: {filepath}')
 
-        with open(path, encoding='utf-8', newline='') as f:
-            return list(csv.reader(f))
+        with open(path, encoding='utf-8', newline='') as file:
+            return list(csv.reader(file))
 
-    def _import_ingredients(self, filepath, skip_existing):
-        """Импорт ингредиентов."""
-        rows = self._read_csv_file(filepath)
+    def _load_ingredients(self, filepath, skip_existing):
+        """Загрузка ингредиентов в БД."""
+        rows = self._parse_csv(filepath)
         if not rows:
             self.stdout.write(self.style.WARNING('Файл ингредиентов пуст'))
             return
 
-        created_count = 0
-        skipped_count = 0
+        created = 0
+        skipped = 0
 
         for row in rows:
             if len(row) < 2:
@@ -56,33 +56,32 @@ class LoadDataCommand(BaseCommand):
 
             if skip_existing and Ingredient.objects.filter(
                 name=name,
-                unit=unit
+                measurement_unit=unit
             ).exists():
-                skipped_count += 1
+                skipped += 1
                 continue
 
             Ingredient.objects.get_or_create(
                 name=name,
-                defaults={'unit': unit}
+                defaults={'measurement_unit': unit}
             )
-            created_count += 1
+            created += 1
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Ингредиенты: создано {created_count},'
-                f'пропущено {skipped_count}'
+                f'Ингредиенты: создано {created}, пропущено {skipped}'
             )
         )
 
-    def _import_tags(self, filepath, skip_existing):
-        """Импорт тегов."""
-        rows = self._read_csv_file(filepath)
+    def _load_tags(self, filepath, skip_existing):
+        """Загрузка тегов в БД."""
+        rows = self._parse_csv(filepath)
         if not rows:
             self.stdout.write(self.style.WARNING('Файл тегов пуст'))
             return
 
-        created_count = 0
-        skipped_count = 0
+        created = 0
+        skipped = 0
 
         for row in rows:
             if len(row) < 3:
@@ -91,7 +90,7 @@ class LoadDataCommand(BaseCommand):
             name, color, slug = row[0].strip(), row[1].strip(), row[2].strip()
 
             if skip_existing and Tag.objects.filter(slug=slug).exists():
-                skipped_count += 1
+                skipped += 1
                 continue
 
             Tag.objects.get_or_create(
@@ -101,11 +100,11 @@ class LoadDataCommand(BaseCommand):
                     'color_code': color,
                 }
             )
-            created_count += 1
+            created += 1
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Теги: создано {created_count}, пропущено {skipped_count}'
+                f'Теги: создано {created}, пропущено {skipped}'
             )
         )
 
@@ -113,14 +112,14 @@ class LoadDataCommand(BaseCommand):
         self.stdout.write(self.style.NOTICE('Начинаем импорт данных...'))
 
         try:
-            self._import_ingredients(
-                options['ingredients_file'],
+            self._load_ingredients(
+                options['ingredients'],
                 options['skip_existing']
             )
-            self._import_tags(
-                options['tags_file'],
+            self._load_tags(
+                options['tags'],
                 options['skip_existing']
             )
-            self.stdout.write(self.style.SUCCESS('Импорт завершён успешно!'))
-        except Exception as exc:
-            raise CommandError(f'Ошибка импорта: {exc}')
+            self.stdout.write(self.style.SUCCESS('Импорт завершён!'))
+        except Exception as error:
+            raise CommandError(f'Ошибка импорта: {error}')

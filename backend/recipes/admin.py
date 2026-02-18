@@ -11,21 +11,21 @@ from recipes.models import (
 
 
 @admin.register(Ingredient)
-class IngredientAdminConfig(admin.ModelAdmin):
-    """Управление ингредиентами."""
+class IngredientAdmin(admin.ModelAdmin):
+    """Админ-панель ингредиентов."""
 
-    list_display = ('id', 'name', 'unit', 'recipes_count')
+    list_display = ('id', 'name', 'measurement_unit', 'usage_count')
     search_fields = ('name',)
-    list_filter = ('unit',)
+    list_filter = ('measurement_unit',)
     ordering = ('name',)
 
-    def recipes_count(self, obj):
-        return obj.recipecomponent_set.count()
-    recipes_count.short_description = 'Кол-во рецептов'
+    def usage_count(self, obj):
+        return obj.recipe_entries.count()
+    usage_count.short_description = 'Использован в рецептах'
 
 
-class RecipeComponentInline(admin.TabularInline):
-    """Инлайн для ингредиентов рецепта."""
+class ComponentInline(admin.TabularInline):
+    """Инлайн-редактор ингредиентов рецепта."""
 
     model = RecipeComponent
     extra = 1
@@ -33,82 +33,82 @@ class RecipeComponentInline(admin.TabularInline):
 
 
 @admin.register(Recipe)
-class RecipeAdminConfig(admin.ModelAdmin):
-    """Управление рецептами."""
+class RecipeAdmin(admin.ModelAdmin):
+    """Админ-панель рецептов."""
 
     list_display = (
         'id',
-        'title',
+        'name',
         'author',
         'cooking_time',
         'created',
-        'favorites_count',
-        'preview_image',
+        'likes_count',
+        'image_preview',
     )
     list_filter = ('tags', 'created', 'cooking_time')
-    search_fields = ('title', 'text', 'author__username')
+    search_fields = ('name', 'text', 'author__username')
     readonly_fields = ('created',)
     filter_horizontal = ('tags',)
-    inlines = [RecipeComponentInline]
+    inlines = [ComponentInline]
     date_hierarchy = 'created'
 
-    def favorites_count(self, obj):
-        return obj.favoriteitem_set.count()
-    favorites_count.short_description = 'В избранном'
+    def likes_count(self, obj):
+        return obj.favorite_items.count()
+    likes_count.short_description = 'В избранном'
 
-    def preview_image(self, obj):
+    def image_preview(self, obj):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 50px;"/>',
                 obj.image.url
             )
         return '—'
-    preview_image.short_description = 'Фото'
+    image_preview.short_description = 'Превью'
 
 
 @admin.register(Tag)
-class TagAdminConfig(admin.ModelAdmin):
-    """Управление тегами."""
+class TagAdmin(admin.ModelAdmin):
+    """Админ-панель тегов."""
 
-    list_display = ('id', 'name', 'color_code', 'slug', 'display_color')
+    list_display = ('id', 'name', 'color_code', 'slug', 'color_preview')
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
 
-    def display_color(self, obj):
+    def color_preview(self, obj):
         return format_html(
-            '<span style="background: {};'
-            'padding: 5px 10px; border-radius: 3px;">{}</span>',
+            '<span style="background: {}; padding: 5px 10px; '
+            'border-radius: 3px; color: white;">{}</span>',
             obj.color_code,
             obj.color_code
         )
-    display_color.short_description = 'Цвет'
+    color_preview.short_description = 'Цвет'
 
 
 @admin.register(ShoppingItem)
-class ShoppingItemAdminConfig(admin.ModelAdmin):
-    """Управление списком покупок."""
+class ShoppingItemAdmin(admin.ModelAdmin):
+    """Админ-панель списка покупок."""
 
     list_display = ('id', 'user', 'recipe', 'added_at')
     list_filter = ('added_at',)
-    search_fields = ('user__username', 'recipe__title')
+    search_fields = ('user__username', 'recipe__name')
     autocomplete_fields = ('user', 'recipe')
 
 
 @admin.register(FavoriteItem)
-class FavoriteItemAdminConfig(admin.ModelAdmin):
-    """Управление избранным."""
+class FavoriteItemAdmin(admin.ModelAdmin):
+    """Админ-панель избранного."""
 
     list_display = ('id', 'user', 'recipe', 'added_at')
     list_filter = ('added_at',)
-    search_fields = ('user__username', 'recipe__title')
+    search_fields = ('user__username', 'recipe__name')
     autocomplete_fields = ('user', 'recipe')
 
 
 @admin.register(RecipeComponent)
-class RecipeComponentAdminConfig(admin.ModelAdmin):
-    """Управление составом рецептов."""
+class RecipeComponentAdmin(admin.ModelAdmin):
+    """Админ-панель компонентов рецептов."""
 
-    list_display = ('id', 'recipe', 'ingredient', 'quantity')
+    list_display = ('id', 'recipe', 'ingredient', 'amount')
     list_filter = ('recipe__tags',)
-    search_fields = ('recipe__title', 'ingredient__name')
+    search_fields = ('recipe__name', 'ingredient__name')
     autocomplete_fields = ('recipe', 'ingredient')

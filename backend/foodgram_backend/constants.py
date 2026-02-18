@@ -1,24 +1,24 @@
-# Ограничения для ингредиентов в рецепте
-INGREDIENT_AMOUNT_MIN = 1
-INGREDIENT_AMOUNT_MAX = 10000  # 10 кг максимум
+# Лимиты для ингредиентов в рецепте
+INGREDIENT_QTY_MIN = 1
+INGREDIENT_QTY_MAX = 10000  # максимум 10 кг
 
-# Временные рамки приготовления (в минутах)
-COOKING_TIME_MIN = 1
-COOKING_TIME_MAX = 32000
+# Время приготовления (минуты)
+COOKING_DURATION_MIN = 1
+COOKING_DURATION_MAX = 32000
 
-# Параметры изображений
-IMAGE_SIZE_LIMIT = 33  # Мб или другие единицы
+# Ограничения изображений
+MAX_IMAGE_SIZE_MB = 33
 
-# Пагинация
+# Настройки пагинации
 DEFAULT_PAGE_SIZE = 6
 MAX_PAGE_SIZE = 100
 
-# Ограничения длины текстовых полей
-TEXT_LENGTH_SHORT = 50
-TEXT_LENGTH_MEDIUM = 150
-TEXT_LENGTH_MAX = 254
-NAME_MAX_LENGTH = 150
+# Длины текстовых полей
+SHORT_TEXT = 50
+MEDIUM_TEXT = 150
+LONG_TEXT = 254
+USERNAME_MAX_LEN = 150
 
-# Для рецептов (используются в сериализаторах)
-MIN_RECIPE_TIME = 1
-MAX_RECIPE_TIME = 32000
+# Для сериализаторов рецептов
+MIN_COOKING_TIME = 1
+MAX_COOKING_TIME = 32000

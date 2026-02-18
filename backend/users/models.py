@@ -3,75 +3,73 @@ from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from foodgram_backend.constants import TEXT_LENGTH_MAX, TEXT_LENGTH_MEDIUM
-from users.managers import UserManager
-from users.validators import validate_full_name, validate_username_format
+from foodgram_backend.constants import LONG_TEXT, MEDIUM_TEXT
+from users.managers import AccountManager
+from users.validators import validate_name, validate_nickname
 
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
-    """Кастомная модель пользователя с email в качестве логина."""
+    """Кастомная модель пользователя с авторизацией по email."""
 
     email = models.EmailField(
-        _('email address'),
-        max_length=TEXT_LENGTH_MAX,
+        _('email'),
+        max_length=LONG_TEXT,
         unique=True,
         error_messages={
-            'unique': _('Пользователь с таким email уже существует.'),
+            'unique': _('Пользователь с таким email уже существует'),
         },
     )
     username = models.CharField(
-        _('username'),
-        max_length=TEXT_LENGTH_MEDIUM,
+        _('логин'),
+        max_length=MEDIUM_TEXT,
         unique=True,
-        validators=[validate_username_format],
+        validators=[validate_nickname],
         error_messages={
-            'unique': _('Пользователь с таким именем уже существует.'),
+            'unique': _('Пользователь с таким логином уже существует'),
         },
     )
     first_name = models.CharField(
-        _('first name'),
-        max_length=TEXT_LENGTH_MEDIUM,
-        validators=[validate_full_name],
+        _('имя'),
+        max_length=MEDIUM_TEXT,
+        validators=[validate_name],
     )
     last_name = models.CharField(
-        _('last name'),
-        max_length=TEXT_LENGTH_MEDIUM,
-        validators=[validate_full_name],
+        _('фамилия'),
+        max_length=MEDIUM_TEXT,
+        validators=[validate_name],
     )
     avatar = models.ImageField(
-        _('avatar'),
+        _('аватар'),
         upload_to='avatars/%Y/%m/',
         blank=True,
         null=True,
     )
 
-    # Status fields
+    # Статусные поля
     is_staff = models.BooleanField(
-        _('staff status'),
+        _('статус персонала'),
         default=False,
-        help_text=_('Может ли пользователь входить в админ-панель.'),
+        help_text=_('Доступ к админ-панели'),
     )
     is_active = models.BooleanField(
-        _('active'),
+        _('активен'),
         default=True,
-        help_text=_(
-            'Отключите вместо удаления аккаунта.'
-        ),
+        help_text=_('Деактивируйте вместо удаления'),
     )
     date_joined = models.DateTimeField(
-        _('date joined'),
+        _('дата регистрации'),
         default=timezone.now
     )
 
-    objects = UserManager()
+    objects = AccountManager()
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
-        verbose_name = _('user')
-        verbose_name_plural = _('users')
+        verbose_name = _('пользователь')
+        verbose_name_plural = _('пользователи')
         ordering = ['-date_joined']
         indexes = [
             models.Index(fields=['email']),
@@ -83,7 +81,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_full_name(self):
-        """Возвращает полное имя."""
+        """Возвращает полное имя пользователя."""
         return f'{self.first_name} {self.last_name}'.strip()
 
     def get_short_name(self):
@@ -98,63 +96,63 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
         return f'{self.username} ({self.email})'
 
     @property
-    def recipe_count(self):
-        """Количество рецептов пользователя."""
-        return self.own_recipes.count()
+    def recipes_created(self):
+        """Количество созданных рецептов."""
+        return self.created_recipes.count()
 
     @property
-    def followers_count(self):
+    def subscribers_count(self):
         """Количество подписчиков."""
         return self.followers.count()
 
     @property
-    def following_count(self):
+    def subscriptions_count(self):
         """Количество подписок."""
         return self.following.count()
 
 
 class FollowRelationship(models.Model):
-    """Модель подписки одного пользователя на другого."""
+    """Модель подписки пользователя на другого пользователя."""
 
-    follower = models.ForeignKey(
+    subscriber = models.ForeignKey(
         UserAccount,
         on_delete=models.CASCADE,
         related_name='following',
         verbose_name=_('подписчик'),
         help_text=_('Кто подписывается'),
     )
-    following = models.ForeignKey(
+    target = models.ForeignKey(
         UserAccount,
         on_delete=models.CASCADE,
         related_name='followers',
         verbose_name=_('на кого подписан'),
-        help_text=_('На кого оформлена подписка'),
+        help_text=_('Цель подписки'),
     )
     created_at = models.DateTimeField(
-        _('subscription date'),
+        _('дата подписки'),
         auto_now_add=True,
     )
 
     class Meta:
-        verbose_name = _('subscription')
-        verbose_name_plural = _('subscriptions')
+        verbose_name = _('подписка')
+        verbose_name_plural = _('подписки')
         constraints = [
             models.UniqueConstraint(
-                fields=['follower', 'following'],
-                name='unique_follow_relationship'
+                fields=['subscriber', 'target'],
+                name='unique_follow'
             ),
             models.CheckConstraint(
-                check=~models.Q(follower=models.F('following')),
-                name='prevent_self_follow'
+                check=~models.Q(subscriber=models.F('target')),
+                name='no_self_follow'
             ),
         ]
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.follower.username} → {self.following.username}'
+        return f'{self.subscriber.username} → {self.target.username}'
 
     def save(self, *args, **kwargs):
-        """Проверка на самоподписку перед сохранением."""
-        if self.follower == self.following:
+        """Предотвращение самоподписки."""
+        if self.subscriber == self.target:
             raise ValueError(_('Нельзя подписаться на самого себя'))
         super().save(*args, **kwargs)

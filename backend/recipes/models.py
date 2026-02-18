@@ -1,25 +1,25 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from foodgram_backend.constants import (
-    COOKING_TIME_MAX,
-    COOKING_TIME_MIN,
-    INGREDIENT_AMOUNT_MAX,
-    INGREDIENT_AMOUNT_MIN,
-    TEXT_LENGTH_MAX,
+    COOKING_DURATION_MAX,
+    COOKING_DURATION_MIN,
+    INGREDIENT_QTY_MAX,
+    INGREDIENT_QTY_MIN,
+    LONG_TEXT,
 )
-from users.models import UserAccount as User
+from users.models import UserAccount
 
 
-class TimestampMixin(models.Model):
-    """Миксин для временных меток."""
+class TimeStampedModel(models.Model):
+    """Абстрактная модель с временными метками."""
 
     created = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Дата создания'
+        verbose_name='Создано'
     )
     updated = models.DateTimeField(
         auto_now=True,
-        verbose_name='Дата обновления'
+        verbose_name='Обновлено'
     )
 
     class Meta:
@@ -30,11 +30,11 @@ class Ingredient(models.Model):
     """Ингредиент для рецептов."""
 
     name = models.CharField(
-        max_length=TEXT_LENGTH_MAX,
+        max_length=LONG_TEXT,
         verbose_name='Название',
         db_index=True,
     )
-    unit = models.CharField(
+    measurement_unit = models.CharField(
         max_length=50,
         verbose_name='Единица измерения'
     )
@@ -44,18 +44,18 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'unit'],
-                name='unique_ingredient_combination'
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient'
             )
         ]
         ordering = ['name']
 
     def __str__(self):
-        return f'{self.name} ({self.unit})'
+        return f'{self.name} ({self.measurement_unit})'
 
 
 class Tag(models.Model):
-    """Тег для категоризации рецептов."""
+    """Тег для классификации рецептов."""
 
     name = models.CharField(
         max_length=100,
@@ -64,12 +64,12 @@ class Tag(models.Model):
     )
     slug = models.SlugField(
         max_length=100,
-        verbose_name='URL-идентификатор',
+        verbose_name='Слаг',
         unique=True,
     )
     color_code = models.CharField(
         max_length=7,
-        verbose_name='HEX-код цвета',
+        verbose_name='HEX-цвет',
         default='#49B64E',
     )
 
@@ -82,31 +82,31 @@ class Tag(models.Model):
         return self.name
 
 
-class Recipe(TimestampMixin):
+class Recipe(TimeStampedModel):
     """Кулинарный рецепт."""
 
     author = models.ForeignKey(
-        User,
+        UserAccount,
         on_delete=models.CASCADE,
-        related_name='own_recipes',
+        related_name='created_recipes',
         verbose_name='Автор',
     )
-    title = models.CharField(
-        max_length=TEXT_LENGTH_MAX,
-        verbose_name='Название рецепта',
+    name = models.CharField(
+        max_length=LONG_TEXT,
+        verbose_name='Название',
     )
-    description = models.TextField(
+    text = models.TextField(
         verbose_name='Описание приготовления',
     )
     image = models.ImageField(
         upload_to='recipes/%Y/%m/%d/',
-        verbose_name='Изображение блюда',
+        verbose_name='Изображение',
     )
     cooking_time = models.PositiveSmallIntegerField(
-        verbose_name='Время приготовления (мин.)',
+        verbose_name='Время приготовления (мин)',
         validators=[
-            MinValueValidator(COOKING_TIME_MIN),
-            MaxValueValidator(COOKING_TIME_MAX),
+            MinValueValidator(COOKING_DURATION_MIN),
+            MaxValueValidator(COOKING_DURATION_MAX),
         ],
     )
     tags = models.ManyToManyField(
@@ -131,19 +131,19 @@ class Recipe(TimestampMixin):
         ]
 
     def __str__(self):
-        return self.title
+        return self.name
 
     @property
-    def favorites_count(self):
-        return self.favoriteitem_set.count()
+    def likes_count(self):
+        return self.favorite_items.count()
 
     @property
     def in_cart_count(self):
-        return self.shoppingitem_set.count()
+        return self.shopping_items.count()
 
 
 class RecipeComponent(models.Model):
-    """Связь рецепта с ингредиентом (количество)."""
+    """Связующая модель: рецепт + ингредиент + количество."""
 
     recipe = models.ForeignKey(
         Recipe,
@@ -157,33 +157,33 @@ class RecipeComponent(models.Model):
         related_name='recipe_entries',
         verbose_name='Ингредиент',
     )
-    quantity = models.PositiveSmallIntegerField(
+    amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
         validators=[
-            MinValueValidator(INGREDIENT_AMOUNT_MIN),
-            MaxValueValidator(INGREDIENT_AMOUNT_MAX),
+            MinValueValidator(INGREDIENT_QTY_MIN),
+            MaxValueValidator(INGREDIENT_QTY_MAX),
         ],
     )
 
     class Meta:
-        verbose_name = 'Компонент рецепта'
-        verbose_name_plural = 'Компоненты рецептов'
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецептах'
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
-                name='unique_recipe_ingredient'
+                name='unique_component'
             )
         ]
 
     def __str__(self):
-        return f'{self.recipe.title}: {self.ingredient.name} — {self.quantity}'
+        return f'{self.recipe.name}: {self.ingredient.name} — {self.amount}'
 
 
-class UserRecipeRelation(TimestampMixin):
-    """Абстрактная модель для связи пользователь-рецепт."""
+class UserRecipeBase(TimeStampedModel):
+    """Абстрактная база для связи пользователь-рецепт."""
 
     user = models.ForeignKey(
-        User,
+        UserAccount,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )
@@ -198,27 +198,27 @@ class UserRecipeRelation(TimestampMixin):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
-                name='%(class)s_unique_relation'
+                name='%(class)s_unique'
             )
         ]
 
     def __str__(self):
-        return f'{self.user.username} ↔ {self.recipe.title}'
+        return f'{self.user.username} — {self.recipe.name}'
 
 
-class FavoriteItem(UserRecipeRelation):
-    """Избранные рецепты пользователя."""
+class FavoriteItem(UserRecipeBase):
+    """Избранные рецепты."""
 
-    class Meta(UserRecipeRelation.Meta):
+    class Meta(UserRecipeBase.Meta):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные рецепты'
         default_related_name = 'favorite_items'
 
 
-class ShoppingItem(UserRecipeRelation):
-    """Рецепты в списке покупок."""
+class ShoppingItem(UserRecipeBase):
+    """Рецепты в корзине покупок."""
 
-    class Meta(UserRecipeRelation.Meta):
+    class Meta(UserRecipeBase.Meta):
         verbose_name = 'Покупка'
-        verbose_name_plural = 'Список покупок'
+        verbose_name_plural = 'Корзина покупок'
         default_related_name = 'shopping_items'

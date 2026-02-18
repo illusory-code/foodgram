@@ -1,57 +1,57 @@
-from django_filters import rest_framework as rest_filters
+from django_filters import rest_framework as filters
 from django_filters.rest_framework import FilterSet
 from recipes.models import Ingredient, Recipe, Tag
 
 
-class RecipeFilterSet(FilterSet):
-    """Фильтрация рецептов по различным критериям."""
+class RecipeFilter(FilterSet):
+    """Фильтрация рецептов по критериям."""
 
-    tags = rest_filters.ModelMultipleChoiceFilter(
+    tag_slugs = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all(),
+        label='Теги',
     )
-    is_favorited = rest_filters.NumberFilter(
-        method='_filter_favorites',
+    liked_by_user = filters.NumberFilter(
+        method='_filter_liked',
         label='В избранном',
     )
-    is_in_shopping_cart = rest_filters.BooleanFilter(
-        method='_filter_cart',
-        label='В корзине покупок',
+    in_user_cart = filters.BooleanFilter(
+        method='_filter_in_cart',
+        label='В корзине',
     )
-    author = rest_filters.NumberFilter(
+    creator_id = filters.NumberFilter(
         field_name='author__id',
         lookup_expr='exact',
-        label='Автор рецепта',
+        label='ID автора',
     )
-
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'author')
+        fields = ('tag_slugs', 'creator_id')
 
-    def _filter_favorites(self, qs, name, val):
-        current_user = self.request.user
-        if current_user.is_authenticated and val:
-            return qs.filter(in_favorites__user=current_user)
-        return qs
+    def _filter_liked(self, queryset, field_name, value):
+        user = self.request.user
+        if user.is_authenticated and value:
+            return queryset.filter(favorite_items__user=user)
+        return queryset
 
-    def _filter_cart(self, qs, name, val):
-        current_user = self.request.user
-        if current_user.is_authenticated and val:
-            return qs.filter(in_cart__user=current_user)
-        return qs
+    def _filter_in_cart(self, queryset, field_name, value):
+        user = self.request.user
+        if user.is_authenticated and value:
+            return queryset.filter(shopping_items__user=user)
+        return queryset
 
 
-class IngredientSearchFilter(FilterSet):
+class IngredientNameFilter(FilterSet):
     """Поиск ингредиентов по началу названия."""
 
-    name = rest_filters.CharFilter(
+    search_term = filters.CharFilter(
         field_name='name',
         lookup_expr='istartswith',
-        label='Поиск по имени',
+        label='Поисковый запрос',
     )
 
     class Meta:
         model = Ingredient
-        fields = ('name',)
+        fields = ('search_term',)

@@ -1,13 +1,13 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
-class IsOwnerOrReadOnly(BasePermission):
+class AuthorOrReadOnly(BasePermission):
     """
-    Разрешение: полный доступ только для автора объекта.
-    Остальным — только чтение.
+    Доступ на запись только для автора объекта.
+    Чтение разрешено всем.
     """
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request, view, target_obj):
         if request.method in SAFE_METHODS:
             return True
-        return obj.author == request.user
+        return target_obj.author == request.user

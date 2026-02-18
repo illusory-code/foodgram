@@ -5,12 +5,12 @@ from users.models import FollowRelationship, UserAccount
 
 
 @admin.register(UserAccount)
-class AccountAdmin(BaseUserAdmin):
-    """Управление пользовательскими аккаунтами."""
+class UserAccountAdmin(BaseUserAdmin):
+    """Админ-панель пользовательских аккаунтов."""
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Персональная информация'), {
+        (_('Персональные данные'), {
             'fields': ('username', 'first_name', 'last_name', 'avatar')
         }),
         (_('Права доступа'), {
@@ -19,7 +19,7 @@ class AccountAdmin(BaseUserAdmin):
                 'groups', 'user_permissions'
             ),
         }),
-        (_('Важные даты'), {'fields': ('last_login', 'date_joined')}),
+        (_('Даты'), {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
@@ -28,42 +28,42 @@ class AccountAdmin(BaseUserAdmin):
         }),
     )
     list_display = (
-        'id', 'email', 'username', 'full_name',
-        'is_active', 'recipe_count'
+        'id', 'email', 'username', 'display_name',
+        'is_active', 'recipes_created'
     )
     list_filter = ('is_active', 'is_staff', 'date_joined')
     search_fields = ('email', 'username', 'first_name', 'last_name')
     ordering = ('-date_joined',)
     readonly_fields = ('last_login', 'date_joined')
 
-    def full_name(self, obj):
+    def display_name(self, obj):
         return f'{obj.first_name} {obj.last_name}'.strip() or '—'
-    full_name.short_description = 'Полное имя'
+    display_name.short_description = 'Полное имя'
 
-    def recipe_count(self, obj):
-        return obj.own_recipes.count()
-    recipe_count.short_description = 'Рецептов'
+    def recipes_created(self, obj):
+        return obj.created_recipes.count()
+    recipes_created.short_description = 'Создано рецептов'
 
 
 @admin.register(FollowRelationship)
-class FollowAdmin(admin.ModelAdmin):
-    """Управление подписками пользователей."""
+class FollowRelationshipAdmin(admin.ModelAdmin):
+    """Админ-панель подписок."""
 
     list_display = (
-        'id', 'follower', 'following',
-        'created_at', 'is_mutual'
+        'id', 'subscriber', 'target',
+        'created_at', 'is_mutual_subscription'
     )
     list_filter = ('created_at',)
     search_fields = (
-        'follower__email', 'following__email', 'follower__username'
+        'subscriber__email', 'target__email', 'subscriber__username'
     )
-    autocomplete_fields = ('follower', 'following')
+    autocomplete_fields = ('subscriber', 'target')
     date_hierarchy = 'created_at'
 
-    def is_mutual(self, obj):
+    def is_mutual_subscription(self, obj):
         return FollowRelationship.objects.filter(
-            follower=obj.following,
-            following=obj.follower
+            subscriber=obj.target,
+            target=obj.subscriber
         ).exists()
-    is_mutual.boolean = True
-    is_mutual.short_description = 'Взаимная подписка'
+    is_mutual_subscription.boolean = True
+    is_mutual_subscription.short_description = 'Взаимная'
