@@ -88,8 +88,8 @@ class TagAdmin(admin.ModelAdmin):
 class ShoppingItemAdmin(admin.ModelAdmin):
     """Админ-панель списка покупок."""
 
-    list_display = ('id', 'user', 'recipe', 'added_at')
-    list_filter = ('added_at',)
+    list_display = ('id', 'user', 'recipe', 'created')
+    list_filter = ('created',)
     search_fields = ('user__username', 'recipe__name')
     autocomplete_fields = ('user', 'recipe')
 
@@ -98,8 +98,8 @@ class ShoppingItemAdmin(admin.ModelAdmin):
 class FavoriteItemAdmin(admin.ModelAdmin):
     """Админ-панель избранного."""
 
-    list_display = ('id', 'user', 'recipe', 'added_at')
-    list_filter = ('added_at',)
+    list_display = ('id', 'user', 'recipe', 'created')
+    list_filter = ('created',)
     search_fields = ('user__username', 'recipe__name')
     autocomplete_fields = ('user', 'recipe')
 
