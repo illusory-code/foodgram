@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from recipes.models import Ingredient, Tag
 
 
-class ImportDataCommand(BaseCommand):
+class Command(BaseCommand):
     """Команда импорта данных из CSV-файлов."""
 
     help = 'Загружает ингредиенты и теги из CSV в базу данных'
