@@ -91,7 +91,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
-            # Используем get_object() непосредственно при создании
             obj, created = model.objects.get_or_create(
                 user=user,
                 recipe=self.get_object()
@@ -110,7 +109,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # DELETE method - используем get_object() непосредственно в фильтре
         deleted, _ = model.objects.filter(
             user=user,
             recipe=self.get_object()

@@ -1,5 +1,4 @@
 from api.views import (
-    AvatarUpdateView,
     IngredientListView,
     RecipeViewSet,
     SubscriptionViewSet,
@@ -25,5 +24,4 @@ router.register(
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
-    path('users/me/avatar/', AvatarUpdateView.as_view(), name='avatar'),
 ]
