@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.translation import gettext_lazy as _
+
 from users.models import FollowRelationship, UserAccount
 
 
@@ -10,16 +10,16 @@ class UserAccountAdmin(BaseUserAdmin):
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Персональные данные'), {
+        ('Персональные данные', {
             'fields': ('username', 'first_name', 'last_name', 'avatar')
         }),
-        (_('Права доступа'), {
+        ('Права доступа', {
             'fields': (
                 'is_active', 'is_staff', 'is_superuser',
                 'groups', 'user_permissions'
             ),
         }),
-        (_('Даты'), {'fields': ('last_login', 'date_joined')}),
+        ('Даты', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {

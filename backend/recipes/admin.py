@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+
 from recipes.models import (
     FavoriteItem,
     Ingredient,
@@ -15,13 +16,14 @@ class IngredientAdmin(admin.ModelAdmin):
     """Админ-панель ингредиентов."""
 
     list_display = ('id', 'name', 'measurement_unit', 'usage_count')
-    search_fields = ('name',)
+    search_fields = ('name', 'measurement_unit')
     list_filter = ('measurement_unit',)
     ordering = ('name',)
 
+    @admin.display(description='Использован в рецептах')
     def usage_count(self, obj):
+        """Возвращает количество использований ингредиента в рецептах."""
         return obj.recipe_entries.count()
-    usage_count.short_description = 'Использован в рецептах'
 
 
 class ComponentInline(admin.TabularInline):
@@ -52,18 +54,20 @@ class RecipeAdmin(admin.ModelAdmin):
     inlines = [ComponentInline]
     date_hierarchy = 'created'
 
+    @admin.display(description='В избранном')
     def likes_count(self, obj):
+        """Возвращает количество добавлений рецепта в избранное."""
         return obj.favorite_items.count()
-    likes_count.short_description = 'В избранном'
 
+    @admin.display(description='Превью')
     def image_preview(self, obj):
+        """Возвращает HTML-код для превью изображения."""
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 50px;"/>',
                 obj.image.url
             )
         return '—'
-    image_preview.short_description = 'Превью'
 
 
 @admin.register(Tag)
@@ -74,14 +78,15 @@ class TagAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
 
+    @admin.display(description='Цвет')
     def color_preview(self, obj):
+        """Возвращает цветовой превью тега."""
         return format_html(
             '<span style="background: {}; padding: 5px 10px; '
             'border-radius: 3px; color: white;">{}</span>',
             obj.color_code,
             obj.color_code
         )
-    color_preview.short_description = 'Цвет'
 
 
 @admin.register(ShoppingItem)

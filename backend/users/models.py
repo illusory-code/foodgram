@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+
 from foodgram_backend.constants import LONG_TEXT, MEDIUM_TEXT
 from users.managers import AccountManager
 from users.validators import validate_name, validate_nickname
@@ -12,52 +12,52 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     """Кастомная модель пользователя с авторизацией по email."""
 
     email = models.EmailField(
-        _('email'),
+        'email',
         max_length=LONG_TEXT,
         unique=True,
         error_messages={
-            'unique': _('Пользователь с таким email уже существует'),
+            'unique': 'Пользователь с таким email уже существует',
         },
     )
     username = models.CharField(
-        _('логин'),
+        'логин',
         max_length=MEDIUM_TEXT,
         unique=True,
         validators=[validate_nickname],
         error_messages={
-            'unique': _('Пользователь с таким логином уже существует'),
+            'unique': 'Пользователь с таким логином уже существует',
         },
     )
     first_name = models.CharField(
-        _('имя'),
+        'имя',
         max_length=MEDIUM_TEXT,
         validators=[validate_name],
     )
     last_name = models.CharField(
-        _('фамилия'),
+        'фамилия',
         max_length=MEDIUM_TEXT,
         validators=[validate_name],
     )
     avatar = models.ImageField(
-        _('аватар'),
+        'аватар',
         upload_to='avatars/%Y/%m/',
         blank=True,
         null=True,
+        default='',
     )
 
-    # Статусные поля
     is_staff = models.BooleanField(
-        _('статус персонала'),
+        'статус персонала',
         default=False,
-        help_text=_('Доступ к админ-панели'),
+        help_text='Доступ к админ-панели',
     )
     is_active = models.BooleanField(
-        _('активен'),
+        'активен',
         default=True,
-        help_text=_('Деактивируйте вместо удаления'),
+        help_text='Деактивируйте вместо удаления',
     )
     date_joined = models.DateTimeField(
-        _('дата регистрации'),
+        'дата регистрации',
         default=timezone.now
     )
 
@@ -68,8 +68,8 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
-        verbose_name = _('пользователь')
-        verbose_name_plural = _('пользователи')
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'пользователи'
         ordering = ['-date_joined']
         indexes = [
             models.Index(fields=['email']),
@@ -118,24 +118,24 @@ class FollowRelationship(models.Model):
         UserAccount,
         on_delete=models.CASCADE,
         related_name='following',
-        verbose_name=_('подписчик'),
-        help_text=_('Кто подписывается'),
+        verbose_name='подписчик',
+        help_text='Кто подписывается',
     )
     target = models.ForeignKey(
         UserAccount,
         on_delete=models.CASCADE,
         related_name='followers',
-        verbose_name=_('на кого подписан'),
-        help_text=_('Цель подписки'),
+        verbose_name='на кого подписан',
+        help_text='Цель подписки',
     )
     created_at = models.DateTimeField(
-        _('дата подписки'),
+        'дата подписки',
         auto_now_add=True,
     )
 
     class Meta:
-        verbose_name = _('подписка')
-        verbose_name_plural = _('подписки')
+        verbose_name = 'подписка'
+        verbose_name_plural = 'подписки'
         constraints = [
             models.UniqueConstraint(
                 fields=['subscriber', 'target'],
@@ -150,9 +150,3 @@ class FollowRelationship(models.Model):
 
     def __str__(self):
         return f'{self.subscriber.username} → {self.target.username}'
-
-    def save(self, *args, **kwargs):
-        """Предотвращение самоподписки."""
-        if self.subscriber == self.target:
-            raise ValueError(_('Нельзя подписаться на самого себя'))
-        super().save(*args, **kwargs)

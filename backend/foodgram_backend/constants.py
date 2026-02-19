@@ -22,3 +22,9 @@ USERNAME_MAX_LEN = 150
 # Для сериализаторов рецептов
 MIN_COOKING_TIME = 1
 MAX_COOKING_TIME = 32000
+
+# Константы для моделей приложения recipes
+TAG_NAME_MAX_LENGTH = 100
+TAG_SLUG_MAX_LENGTH = 100
+TAG_COLOR_MAX_LENGTH = 7
+INGREDIENT_UNIT_MAX_LENGTH = 50

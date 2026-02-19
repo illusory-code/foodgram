@@ -1,11 +1,16 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from foodgram_backend.constants import (
     COOKING_DURATION_MAX,
     COOKING_DURATION_MIN,
     INGREDIENT_QTY_MAX,
     INGREDIENT_QTY_MIN,
     LONG_TEXT,
+    TAG_NAME_MAX_LENGTH,
+    TAG_SLUG_MAX_LENGTH,
+    TAG_COLOR_MAX_LENGTH,
+    INGREDIENT_UNIT_MAX_LENGTH,
 )
 from users.models import UserAccount
 
@@ -35,7 +40,7 @@ class Ingredient(models.Model):
         db_index=True,
     )
     measurement_unit = models.CharField(
-        max_length=50,
+        max_length=INGREDIENT_UNIT_MAX_LENGTH,
         verbose_name='Единица измерения'
     )
 
@@ -58,17 +63,17 @@ class Tag(models.Model):
     """Тег для классификации рецептов."""
 
     name = models.CharField(
-        max_length=100,
+        max_length=TAG_NAME_MAX_LENGTH,
         verbose_name='Название',
         unique=True,
     )
     slug = models.SlugField(
-        max_length=100,
+        max_length=TAG_SLUG_MAX_LENGTH,
         verbose_name='Слаг',
         unique=True,
     )
     color_code = models.CharField(
-        max_length=7,
+        max_length=TAG_COLOR_MAX_LENGTH,
         verbose_name='HEX-цвет',
         default='#49B64E',
     )
@@ -88,7 +93,7 @@ class Recipe(TimeStampedModel):
     author = models.ForeignKey(
         UserAccount,
         on_delete=models.CASCADE,
-        related_name='created_recipes',
+        related_name='recipes',
         verbose_name='Автор',
     )
     name = models.CharField(
@@ -111,13 +116,13 @@ class Recipe(TimeStampedModel):
     )
     tags = models.ManyToManyField(
         Tag,
-        related_name='tagged_recipes',
+        related_name='recipes',
         verbose_name='Теги',
     )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeComponent',
-        related_name='used_in_recipes',
+        related_name='recipes',
         verbose_name='Ингредиенты',
     )
 
@@ -129,6 +134,7 @@ class Recipe(TimeStampedModel):
             models.Index(fields=['-created']),
             models.Index(fields=['author', '-created']),
         ]
+        default_related_name = 'recipes'
 
     def __str__(self):
         return self.name

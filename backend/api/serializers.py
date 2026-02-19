@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
 from foodgram_backend.constants import (
     MAX_COOKING_TIME,
     MIN_COOKING_TIME,
@@ -13,7 +15,6 @@ from recipes.models import (
     ShoppingItem,
     Tag,
 )
-from rest_framework import serializers
 from users.models import FollowRelationship
 from users.validators import validate_name, validate_nickname
 
@@ -175,8 +176,8 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
         source='components',
         read_only=True,
     )
-    is_liked = serializers.SerializerMethodField()
-    is_in_cart = serializers.SerializerMethodField()
+    is_liked = serializers.BooleanField(read_only=True, default=False)
+    is_in_cart = serializers.BooleanField(read_only=True, default=False)
 
     class Meta:
         model = Recipe
@@ -192,24 +193,6 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
-
-    def get_is_liked(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return FavoriteItem.objects.filter(
-                user=request.user,
-                recipe=obj
-            ).exists()
-        return False
-
-    def get_is_in_cart(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return ShoppingItem.objects.filter(
-                user=request.user,
-                recipe=obj
-            ).exists()
-        return False
 
 
 class RecipeIngredientInputSerializer(serializers.ModelSerializer):
@@ -253,14 +236,14 @@ class RecipeInputSerializer(serializers.ModelSerializer):
         )
 
     def _process_ingredients(self, recipe, items_data):
-        RecipeComponent.objects.bulk_create([
+        RecipeComponent.objects.bulk_create(
             RecipeComponent(
                 recipe=recipe,
                 ingredient=item['id'],
                 amount=item['amount'],
             )
             for item in items_data
-        ])
+        )
 
     def create(self, validated_data):
         items = validated_data.pop('ingredients')
@@ -338,6 +321,7 @@ class AuthorWithRecipesSerializer(serializers.ModelSerializer):
     has_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_total = serializers.SerializerMethodField()
+    avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
@@ -367,7 +351,7 @@ class AuthorWithRecipesSerializer(serializers.ModelSerializer):
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.query_params.get('recipes_limit')
-        qs = obj.created_recipes.all()
+        qs = obj.recipes.all()
         if limit:
             qs = qs[:int(limit)]
         return ShortRecipeSerializer(
@@ -377,7 +361,7 @@ class AuthorWithRecipesSerializer(serializers.ModelSerializer):
         ).data
 
     def get_recipes_total(self, obj):
-        return obj.created_recipes.count()
+        return obj.recipes.count()
 
 
 class FollowActionSerializer(serializers.ModelSerializer):
@@ -415,7 +399,7 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
     has_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_total = serializers.SerializerMethodField()
-    avatar = serializers.SerializerMethodField()
+    avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
@@ -442,15 +426,10 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
             ).exists()
         )
 
-    def get_avatar(self, obj):
-        if obj.avatar:
-            return obj.avatar.url
-        return None
-
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.query_params.get('recipes_limit')
-        qs = obj.created_recipes.all()
+        qs = obj.recipes.all()
         if limit:
             qs = qs[:int(limit)]
         return ShortRecipeSerializer(
@@ -460,4 +439,4 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
         ).data
 
     def get_recipes_total(self, obj):
-        return obj.created_recipes.count()
+        return obj.recipes.count()
