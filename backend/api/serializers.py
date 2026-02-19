@@ -1,7 +1,5 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
-
 from foodgram_backend.constants import (
     MAX_COOKING_TIME,
     MIN_COOKING_TIME,
@@ -15,6 +13,7 @@ from recipes.models import (
     ShoppingItem,
     Tag,
 )
+from rest_framework import serializers
 from users.models import FollowRelationship
 from users.validators import validate_name, validate_nickname
 

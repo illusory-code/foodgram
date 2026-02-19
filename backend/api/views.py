@@ -1,18 +1,6 @@
 import io
 import logging
 
-from django.contrib.auth import get_user_model
-from django.db.models import Exists, OuterRef, Sum
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
-from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from api.filters import IngredientNameFilter, RecipeFilter
 from api.pagination import PaginatedResponse
 from api.permissions import AuthorOrReadOnly
@@ -23,11 +11,17 @@ from api.serializers import (
     LikeSerializer,
     RecipeInputSerializer,
     RecipeOutputSerializer,
-    ShortRecipeSerializer,
     SubscriptionListSerializer,
     TagInfoSerializer,
     UserInfoSerializer,
 )
+from api.utils import generate_shopping_list_text
+from django.contrib.auth import get_user_model
+from django.db.models import Exists, OuterRef, Sum
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from recipes.models import (
     FavoriteItem,
     Ingredient,
@@ -36,8 +30,11 @@ from recipes.models import (
     ShoppingItem,
     Tag,
 )
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from users.models import FollowRelationship
-from api.utils import generate_shopping_list_text
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -91,13 +88,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def _handle_favorite_cart(self, request, pk, model, serializer_class):
         """Обобщённый метод для работы с избранным и корзиной."""
-        recipe = self.get_object()
         user = request.user
 
         if request.method == 'POST':
+            # Используем get_object() непосредственно при создании
             obj, created = model.objects.get_or_create(
                 user=user,
-                recipe=recipe
+                recipe=self.get_object()
             )
             if created:
                 serializer = serializer_class(
@@ -113,9 +110,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # DELETE method - используем get_object() непосредственно в фильтре
         deleted, _ = model.objects.filter(
             user=user,
-            recipe=recipe
+            recipe=self.get_object()
         ).delete()
 
         if deleted:
@@ -200,7 +198,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def get_short_link(self, request, pk=None):
         """Получение короткой ссылки на рецепт."""
-        recipe = get_object_or_404(Recipe, pk=pk)
+        get_object_or_404(Recipe, pk=pk)
         short_url = request.build_absolute_uri(f'/r/{pk}/')
         return Response({'short-link': short_url})
 

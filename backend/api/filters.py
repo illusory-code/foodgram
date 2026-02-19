@@ -1,6 +1,5 @@
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import FilterSet
-
 from recipes.models import Ingredient, Recipe, Tag
 
 
@@ -33,7 +32,12 @@ class RecipeFilter(FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ('tag_slugs', 'creator_id', 'is_in_shopping_cart', 'is_favorited')
+        fields = (
+            'tag_slugs',
+            'creator_id',
+            'is_in_shopping_cart',
+            'is_favorited'
+        )
 
     def _filter_liked(self, queryset, field_name, value):
         """Фильтрация по наличию в избранном."""
