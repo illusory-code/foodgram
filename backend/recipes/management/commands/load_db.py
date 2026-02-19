@@ -48,8 +48,12 @@ class Command(BaseCommand):
         created = 0
         skipped = 0
 
-        for row in rows:
-            if len(row) < 2:
+        start_row = 0
+        if rows and rows[0] and rows[0][0] == 'name':
+            start_row = 1
+            self.stdout.write('Пропускаем строку заголовков')
+        for row in rows[start_row:]:
+            if len(row) < 3:
                 continue
 
             name, unit = row[0].strip(), row[1].strip()
