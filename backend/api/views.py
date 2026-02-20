@@ -79,15 +79,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 is_in_shopping_cart=Exists(in_cart_sq),
                 is_favorited=Exists(liked_sq)
             )
-            
-            is_in_shopping_cart_param = self.request.query_params.get('is_in_shopping_cart')
+
+            is_in_shopping_cart_param = self.request.query_params.get(
+                'is_in_shopping_cart'
+            )
             if is_in_shopping_cart_param is not None:
-                is_in_shopping_cart_value = str(is_in_shopping_cart_param).lower() in ('true', '1', 'yes')
+                is_in_shopping_cart_value = str(
+                    is_in_shopping_cart_param
+                ).lower() in ('true', '1', 'yes')
                 qs = qs.filter(is_in_shopping_cart=is_in_shopping_cart_value)
-            
+
             is_favorited_param = self.request.query_params.get('is_favorited')
             if is_favorited_param is not None:
-                is_favorited_value = str(is_favorited_param).lower() in ('true', '1', 'yes')
+                is_favorited_value = str(
+                    is_favorited_param
+                ).lower() in ('true', '1', 'yes')
                 qs = qs.filter(is_favorited=is_favorited_value)
         else:
             qs = qs.annotate(
