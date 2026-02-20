@@ -49,14 +49,16 @@ class Command(BaseCommand):
         skipped = 0
 
         start_row = 0
-        if rows and rows[0] and rows[0][0] == 'name':
+        if rows and rows[0] and rows[0][0].lower() == 'name':
             start_row = 1
             self.stdout.write('Пропускаем строку заголовков')
+
         for row in rows[start_row:]:
-            if len(row) < 3:
+            if len(row) < 2:
                 continue
 
-            name, unit = row[0].strip(), row[1].strip()
+            name = row[0].strip()
+            unit = row[1].strip()
 
             if skip_existing and Ingredient.objects.filter(
                 name=name,
@@ -87,11 +89,23 @@ class Command(BaseCommand):
         created = 0
         skipped = 0
 
-        for row in rows:
+        start_row = 0
+        if rows and rows[0] and rows[0][0].lower() == 'name':
+            start_row = 1
+            self.stdout.write('Пропускаем строку заголовков')
+
+        for row in rows[start_row:]:
             if len(row) < 3:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'Пропущена строка: {row} - недостаточно данных'
+                    )
+                )
                 continue
 
-            name, color, slug = row[0].strip(), row[1].strip(), row[2].strip()
+            name = row[0].strip()
+            color = row[1].strip()
+            slug = row[2].strip()
 
             if skip_existing and Tag.objects.filter(slug=slug).exists():
                 skipped += 1

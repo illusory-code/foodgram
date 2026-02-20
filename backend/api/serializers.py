@@ -87,11 +87,21 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def to_representation(self, instance):
+        """Переопределяем представление после создания."""
+        return {
+            'email': instance.email,
+            'id': instance.id,
+            'username': instance.username,
+            'first_name': instance.first_name,
+            'last_name': instance.last_name
+        }
+
 
 class UserInfoSerializer(serializers.ModelSerializer):
     """Сериализатор информации о пользователе."""
 
-    has_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
     avatar = Base64ImageField(required=False, allow_null=True)
     first_name = serializers.CharField(
         max_length=USERNAME_MAX_LEN,
@@ -114,14 +124,17 @@ class UserInfoSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
-            'has_subscribed',
+            'is_subscribed',
             'avatar',
         )
         extra_kwargs = {'password': {'write_only': True}}
 
-    def get_has_subscribed(self, obj):
+    def get_is_subscribed(self, obj):
+        """Подписан ли текущий пользователь на данного пользователя."""
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
+            return False
+        if request.user == obj:
             return False
         return FollowRelationship.objects.filter(
             subscriber=request.user,
@@ -175,8 +188,11 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
         source='components',
         read_only=True,
     )
-    is_liked = serializers.BooleanField(read_only=True, default=False)
-    is_in_cart = serializers.BooleanField(read_only=True, default=False)
+    is_favorited = serializers.BooleanField(read_only=True, default=False)
+    is_in_shopping_cart = serializers.BooleanField(
+        read_only=True,
+        default=False
+    )
 
     class Meta:
         model = Recipe
@@ -185,8 +201,8 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
             'tags',
             'author',
             'ingredients',
-            'is_liked',
-            'is_in_cart',
+            'is_favorited',
+            'is_in_shopping_cart',
             'name',
             'image',
             'text',
@@ -317,9 +333,9 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 class AuthorWithRecipesSerializer(serializers.ModelSerializer):
     """Сериализатор автора с его рецептами (для подписок)."""
 
-    has_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
-    recipes_total = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
     avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
@@ -330,13 +346,13 @@ class AuthorWithRecipesSerializer(serializers.ModelSerializer):
             'username',
             'first_name',
             'last_name',
-            'has_subscribed',
+            'is_subscribed',
             'recipes',
-            'recipes_total',
+            'recipes_count',
             'avatar',
         )
 
-    def get_has_subscribed(self, obj):
+    def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return False
@@ -359,7 +375,7 @@ class AuthorWithRecipesSerializer(serializers.ModelSerializer):
             context={'request': request}
         ).data
 
-    def get_recipes_total(self, obj):
+    def get_recipes_count(self, obj):
         return obj.recipes.count()
 
 
@@ -395,9 +411,9 @@ class FollowActionSerializer(serializers.ModelSerializer):
 class SubscriptionListSerializer(serializers.ModelSerializer):
     """Сериализатор списка подписок."""
 
-    has_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
-    recipes_total = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
     avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
@@ -408,13 +424,13 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
             'username',
             'first_name',
             'last_name',
-            'has_subscribed',
+            'is_subscribed',
             'recipes',
-            'recipes_total',
+            'recipes_count',
             'avatar',
         )
 
-    def get_has_subscribed(self, obj):
+    def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return (
             request
@@ -437,5 +453,5 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
             context={'request': request}
         ).data
 
-    def get_recipes_total(self, obj):
+    def get_recipes_count(self, obj):
         return obj.recipes.count()

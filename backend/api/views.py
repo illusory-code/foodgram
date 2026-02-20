@@ -11,6 +11,7 @@ from api.serializers import (
     LikeSerializer,
     RecipeInputSerializer,
     RecipeOutputSerializer,
+    ShortRecipeSerializer,
     SubscriptionListSerializer,
     TagInfoSerializer,
     UserInfoSerializer,
@@ -75,13 +76,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe=OuterRef('pk')
             )
             qs = qs.annotate(
-                is_in_cart=Exists(in_cart_sq),
-                is_liked=Exists(liked_sq)
+                is_in_shopping_cart=Exists(in_cart_sq),
+                is_favorited=Exists(liked_sq)
             )
         else:
             qs = qs.annotate(
-                is_in_cart=Exists(ShoppingItem.objects.none()),
-                is_liked=Exists(FavoriteItem.objects.none())
+                is_in_shopping_cart=Exists(ShoppingItem.objects.none()),
+                is_favorited=Exists(FavoriteItem.objects.none())
             )
 
         return qs
@@ -91,15 +92,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
+            recipe = self.get_object()
             obj, created = model.objects.get_or_create(
                 user=user,
-                recipe=self.get_object()
+                recipe=recipe
             )
             if created:
-                serializer = serializer_class(
-                    obj,
-                    context={'request': request}
-                )
+                if model == FavoriteItem:
+                    serializer = ShortRecipeSerializer(
+                        recipe,
+                        context={'request': request}
+                    )
+                else:
+                    serializer = serializer_class(
+                        obj,
+                        context={'request': request}
+                    )
                 return Response(
                     serializer.data,
                     status=status.HTTP_201_CREATED
@@ -109,9 +117,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        recipe = self.get_object()
         deleted, _ = model.objects.filter(
             user=user,
-            recipe=self.get_object()
+            recipe=recipe
         ).delete()
 
         if deleted:
@@ -178,15 +187,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         file_content = generate_shopping_list_text(items)
 
-        buffer = io.StringIO()
-        buffer.write(file_content)
+        buffer = io.BytesIO()
+        buffer.write(file_content.encode('utf-8'))
         buffer.seek(0)
 
         return FileResponse(
             buffer,
             as_attachment=True,
             filename='shopping_list.txt',
-            content_type='text/plain'
+            content_type='text/plain; charset=utf-8'
         )
 
     @action(
@@ -242,8 +251,21 @@ class UserAccountViewSet(UserViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserInfoSerializer
-    permission_classes = (IsAuthenticated,)
     pagination_class = PaginatedResponse
+
+    def get_permissions(self):
+        """Разные права для разных действий."""
+        if self.action == 'me':
+            return [IsAuthenticated()]
+        elif self.action in ['subscribe', 'subscriptions', 'avatar']:
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
+    def get_serializer_context(self):
+        """Передаём request в контекст сериализатора."""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
     @action(
         methods=['get'],
@@ -298,12 +320,29 @@ class UserAccountViewSet(UserViewSet):
         target_user = get_object_or_404(User, id=id)
         current_user = request.user
 
+        if current_user == target_user:
+            return Response(
+                {'error': 'Нельзя подписаться на самого себя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if request.method == 'POST':
-            _, created = FollowRelationship.objects.get_or_create(
+            existing = FollowRelationship.objects.filter(
                 subscriber=current_user,
                 target=target_user
-            )
-            if created:
+            ).exists()
+
+            if existing:
+                return Response(
+                    {'errors': 'Подписка уже оформлена'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                FollowRelationship.objects.create(
+                    subscriber=current_user,
+                    target=target_user
+                )
                 return Response(
                     AuthorWithRecipesSerializer(
                         target_user,
@@ -311,10 +350,11 @@ class UserAccountViewSet(UserViewSet):
                     ).data,
                     status=status.HTTP_201_CREATED
                 )
-            return Response(
-                {'error': 'Подписка уже оформлена'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            except Exception:
+                return Response(
+                    {'error': 'Ошибка при создании подписки'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         deleted, _ = FollowRelationship.objects.filter(
             subscriber=current_user,

@@ -5,3 +5,4 @@ media
 .git
 db.sqlite3-journal
 .vscode
+.env.local

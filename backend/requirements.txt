@@ -8,3 +8,6 @@ drf-extra-fields==3.7.0
 django-cors-headers==4.3.1
 psycopg2-binary==2.9.9
 gunicorn==21.2.0
+djoser==2.3.3
+django-filter==25.2
+drf-extra-fields==3.7.0

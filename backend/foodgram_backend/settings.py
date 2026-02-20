@@ -30,7 +30,6 @@ ALLOWED_HOSTS = os.getenv(
     'foodgram-kuzmin.ddns.net'
 ).split(',')
 
-# Приложения Django
 CORE_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,7 +39,6 @@ CORE_APPS = [
     'django.contrib.staticfiles',
 ]
 
-# Сторонние приложения
 THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
@@ -49,7 +47,6 @@ THIRD_PARTY_APPS = [
     'django_filters',
 ]
 
-# Локальные приложения
 LOCAL_APPS = [
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
@@ -162,7 +159,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Кастомная модель пользователя
 AUTH_USER_MODEL = 'users.UserAccount'
 
 # Настройки Djoser

@@ -6,56 +6,33 @@ from recipes.models import Ingredient, Recipe, Tag
 class RecipeFilter(FilterSet):
     """Фильтрация рецептов по критериям."""
 
-    tag_slugs = filters.ModelMultipleChoiceFilter(
+    tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all(),
         label='Теги',
+        conjoined=False
     )
-    liked_by_user = filters.NumberFilter(
-        method='_filter_liked',
-        label='В избранном',
-    )
-    is_in_shopping_cart = filters.BooleanFilter(
-        method='_filter_in_cart',
-        label='В корзине',
-    )
-    is_favorited = filters.BooleanFilter(
-        method='_filter_liked',
-        label='В избранном',
-    )
-    creator_id = filters.NumberFilter(
+
+    author = filters.NumberFilter(
         field_name='author__id',
         lookup_expr='exact',
         label='ID автора',
     )
 
+    is_favorited = filters.BooleanFilter(
+        field_name='is_favorited',
+        label='В избранном',
+    )
+
+    is_in_shopping_cart = filters.BooleanFilter(
+        field_name='is_in_shopping_cart',
+        label='В корзине',
+    )
+
     class Meta:
         model = Recipe
-        fields = (
-            'tag_slugs',
-            'creator_id',
-            'is_in_shopping_cart',
-            'is_favorited'
-        )
-
-    def _filter_liked(self, queryset, field_name, value):
-        """Фильтрация по наличию в избранном."""
-        user = self.request.user
-        if user.is_authenticated and value is not None:
-            if value:
-                return queryset.filter(favorite_items__user=user)
-            return queryset.exclude(favorite_items__user=user)
-        return queryset
-
-    def _filter_in_cart(self, queryset, field_name, value):
-        """Фильтрация по наличию в корзине."""
-        user = self.request.user
-        if user.is_authenticated and value is not None:
-            if value:
-                return queryset.filter(shopping_items__user=user)
-            return queryset.exclude(shopping_items__user=user)
-        return queryset
+        fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
 
 
 class IngredientNameFilter(FilterSet):
