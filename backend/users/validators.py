@@ -2,17 +2,17 @@ import re
 
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from foodgram_backend.constants import MEDIUM_TEXT
+from foodgram_backend.constants import MAX_NAME_LENGTH
 
 
 def validate_name(value):
     """Валидация имени и фамилии."""
     if not value:
         raise ValidationError('Обязательное поле')
-    if len(value) > MEDIUM_TEXT:
+    if len(value) > MAX_NAME_LENGTH:
         raise ValidationError(
             'Максимум %(max)d символов',
-            params={'max': MEDIUM_TEXT},
+            params={'max': MAX_NAME_LENGTH},
         )
     if not re.match(r'^[А-Яа-яЁёA-Za-z\- ]+$', value):
         raise ValidationError('Только буквы, дефисы и пробелы')
@@ -28,10 +28,10 @@ def validate_nickname(value):
         raise ValidationError(
             'Только буквы, цифры и символы @/./+/-/_.'
         )
-    if len(value) > MEDIUM_TEXT:
+    if len(value) > MAX_NAME_LENGTH:
         raise ValidationError(
             'Максимум %(max)d символов',
-            params={'max': MEDIUM_TEXT},
+            params={'max': MAX_NAME_LENGTH},
         )
 
 

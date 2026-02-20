@@ -75,6 +75,7 @@ class Tag(models.Model):
         max_length=TAG_COLOR_MAX_LENGTH,
         verbose_name='HEX-цвет',
         default='#49B64E',
+        help_text='Цвет тега для отображения в интерфейсе фронтенда'
     )
 
     class Meta:

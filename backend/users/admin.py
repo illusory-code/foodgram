@@ -35,13 +35,13 @@ class UserAccountAdmin(BaseUserAdmin):
     ordering = ('-date_joined',)
     readonly_fields = ('last_login', 'date_joined')
 
+    @admin.display(description='Полное имя')
     def display_name(self, obj):
         return f'{obj.first_name} {obj.last_name}'.strip() or '—'
-    display_name.short_description = 'Полное имя'
 
+    @admin.display(description='Создано рецептов')
     def recipes_created(self, obj):
         return obj.created_recipes.count()
-    recipes_created.short_description = 'Создано рецептов'
 
 
 @admin.register(FollowRelationship)
@@ -59,10 +59,9 @@ class FollowRelationshipAdmin(admin.ModelAdmin):
     autocomplete_fields = ('subscriber', 'target')
     date_hierarchy = 'created_at'
 
+    @admin.display(description='Взаимная', boolean=True)
     def is_mutual_subscription(self, obj):
         return FollowRelationship.objects.filter(
             subscriber=obj.target,
             target=obj.subscriber
         ).exists()
-    is_mutual_subscription.boolean = True
-    is_mutual_subscription.short_description = 'Взаимная'

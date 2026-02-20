@@ -79,22 +79,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 is_in_shopping_cart=Exists(in_cart_sq),
                 is_favorited=Exists(liked_sq)
             )
-
-            is_in_shopping_cart_param = self.request.query_params.get(
-                'is_in_shopping_cart'
-            )
-            if is_in_shopping_cart_param is not None:
-                is_in_shopping_cart_value = str(
-                    is_in_shopping_cart_param
-                ).lower() in ('true', '1', 'yes')
-                qs = qs.filter(is_in_shopping_cart=is_in_shopping_cart_value)
-
-            is_favorited_param = self.request.query_params.get('is_favorited')
-            if is_favorited_param is not None:
-                is_favorited_value = str(
-                    is_favorited_param
-                ).lower() in ('true', '1', 'yes')
-                qs = qs.filter(is_favorited=is_favorited_value)
         else:
             qs = qs.annotate(
                 is_in_shopping_cart=Exists(ShoppingItem.objects.none()),
@@ -103,36 +87,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return qs
 
-    def _handle_favorite_cart(self, request, pk, model, serializer_class):
-        """Обобщённый метод для работы с избранным и корзиной."""
+    def _add_to_favorite_cart(self, request, pk, model, serializer_class):
+        """Добавление в избранное или корзину."""
         user = request.user
-
-        if request.method == 'POST':
-            recipe = self.get_object()
-            obj, created = model.objects.get_or_create(
-                user=user,
-                recipe=recipe
-            )
-            if created:
-                if model == FavoriteItem:
-                    serializer = ShortRecipeSerializer(
-                        recipe,
-                        context={'request': request}
-                    )
-                else:
-                    serializer = serializer_class(
-                        obj,
-                        context={'request': request}
-                    )
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
+        recipe = self.get_object()
+        obj, created = model.objects.get_or_create(
+            user=user,
+            recipe=recipe
+        )
+        if created:
+            if model == FavoriteItem:
+                serializer = ShortRecipeSerializer(
+                    recipe,
+                    context={'request': request}
+                )
+            else:
+                serializer = serializer_class(
+                    obj,
+                    context={'request': request}
                 )
             return Response(
-                {'detail': 'Рецепт уже добавлен'},
-                status=status.HTTP_400_BAD_REQUEST
+                serializer.data,
+                status=status.HTTP_201_CREATED
             )
+        return Response(
+            {'detail': 'Рецепт уже добавлен'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
+    def _remove_from_favorite_cart(self, request, pk, model):
+        """Удаление из избранного или корзины."""
+        user = request.user
         recipe = self.get_object()
         deleted, _ = model.objects.filter(
             user=user,
@@ -154,15 +139,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def add_favorite(self, request, pk=None):
         """Добавление рецепта в избранное."""
-        return self._handle_favorite_cart(
+        return self._add_to_favorite_cart(
             request, pk, FavoriteItem, LikeSerializer
         )
 
     @add_favorite.mapping.delete
     def delete_favorite(self, request, pk=None):
         """Удаление рецепта из избранного."""
-        return self._handle_favorite_cart(
-            request, pk, FavoriteItem, LikeSerializer
+        return self._remove_from_favorite_cart(
+            request, pk, FavoriteItem
         )
 
     @action(
@@ -173,15 +158,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def add_to_cart(self, request, pk=None):
         """Добавление рецепта в корзину."""
-        return self._handle_favorite_cart(
+        return self._add_to_favorite_cart(
             request, pk, ShoppingItem, CartSerializer
         )
 
     @add_to_cart.mapping.delete
     def delete_from_cart(self, request, pk=None):
         """Удаление рецепта из корзины."""
-        return self._handle_favorite_cart(
-            request, pk, ShoppingItem, CartSerializer
+        return self._remove_from_favorite_cart(
+            request, pk, ShoppingItem
         )
 
     @action(
