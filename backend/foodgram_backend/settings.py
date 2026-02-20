@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
-from django.utils.deprecation import MiddlewareMixin
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -54,18 +53,11 @@ LOCAL_APPS = [
     'api.apps.ApiConfig',
 ]
 
-
-class DisableCSRFForAPIMiddleware(MiddlewareMixin):
-    def process_request(self, request):
-        if request.path.startswith('/api/'):
-            setattr(request, '_dont_enforce_csrf_checks', True)
-
-
 INSTALLED_APPS = CORE_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'foodgram_backend.settings.DisableCSRFForAPIMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
