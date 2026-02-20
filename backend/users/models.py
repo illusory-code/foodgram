@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
-from foodgram_backend.constants import LONG_TEXT, MEDIUM_TEXT
+from foodgram_backend.constants import LONG_TEXT, MAX_NAME_LENGTH
 from users.managers import AccountManager
 from users.validators import validate_name, validate_nickname
 
@@ -20,7 +20,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     )
     username = models.CharField(
         'логин',
-        max_length=MEDIUM_TEXT,
+        max_length=MAX_NAME_LENGTH,
         unique=True,
         validators=[validate_nickname],
         error_messages={
@@ -29,12 +29,12 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     )
     first_name = models.CharField(
         'имя',
-        max_length=MEDIUM_TEXT,
+        max_length=MAX_NAME_LENGTH,
         validators=[validate_name],
     )
     last_name = models.CharField(
         'фамилия',
-        max_length=MEDIUM_TEXT,
+        max_length=MAX_NAME_LENGTH,
         validators=[validate_name],
     )
     avatar = models.ImageField(
