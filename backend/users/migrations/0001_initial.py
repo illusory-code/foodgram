@@ -70,8 +70,8 @@ class Migration(migrations.Migration):
             model_name='followrelationship',
             constraint=models.UniqueConstraint(fields=('subscriber', 'target'), name='unique_follow'),
         ),
-        migrations.AddConstraint(
-            model_name='followrelationship',
-            constraint=models.CheckConstraint(condition=models.Q(('subscriber', models.F('target')), _negated=True), name='no_self_follow'),
-        ),
+        # migrations.AddConstraint(
+            # model_name='followrelationship',
+            # constraint=models.CheckConstraint(condition=models.Q(('subscriber', models.F('target')), _negated=True), name='no_self_follow'),
+        # ),
     ]
