@@ -97,6 +97,7 @@ if USE_SQLITE:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 else:
     DATABASES = {
         'default': {
