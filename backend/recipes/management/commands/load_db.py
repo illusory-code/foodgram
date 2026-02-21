@@ -105,7 +105,6 @@ class Command(BaseCommand):
                 continue
 
             name = row[0].strip()
-            color = row[1].strip()
             slug = row[2].strip()
 
             if skip_existing and Tag.objects.filter(slug=slug).exists():
@@ -116,7 +115,6 @@ class Command(BaseCommand):
                 slug=slug,
                 defaults={
                     'name': name,
-                    'color_code': color,
                 }
             )
             created += 1

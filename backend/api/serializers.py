@@ -235,7 +235,7 @@ class RecipeInputSerializer(serializers.ModelSerializer):
     """Сериализатор для создания/обновления рецепта."""
 
     ingredients = RecipeIngredientInputSerializer(many=True)
-    image = Base64ImageField(required=False)
+    image = Base64ImageField(required=False, allow_null=True)
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all(),
@@ -256,41 +256,6 @@ class RecipeInputSerializer(serializers.ModelSerializer):
             'ingredients',
             'image',
         )
-
-    def _process_ingredients(self, recipe, items_data):
-        RecipeComponent.objects.bulk_create(
-            RecipeComponent(
-                recipe=recipe,
-                ingredient=item['id'],
-                amount=item['amount'],
-            )
-            for item in items_data
-        )
-
-    def create(self, validated_data):
-        items = validated_data.pop('ingredients')
-        tags_list = validated_data.pop('tags')
-
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags_list)
-        self._process_ingredients(recipe, items)
-
-        return recipe
-
-    def update(self, instance, validated_data):
-        items = validated_data.pop('ingredients', None)
-        tags_list = validated_data.pop('tags', None)
-
-        instance = super().update(instance, validated_data)
-
-        if tags_list is not None:
-            instance.tags.set(tags_list)
-
-        if items is not None:
-            instance.components.all().delete()
-            self._process_ingredients(instance, items)
-
-        return instance
 
     def validate(self, data):
         tags = data.get('tags')
@@ -317,8 +282,54 @@ class RecipeInputSerializer(serializers.ModelSerializer):
                     {'ingredients': 'Ингредиенты должны быть уникальны'}
                 )
             seen_ids.add(ing_id)
+        request = self.context.get('request')
+        if request and request.method == 'POST':
+            if not data.get('image'):
+                raise serializers.ValidationError(
+                    {'image': 'Это поле обязательно при создании рецепта.'}
+                )
 
         return data
+
+    def _process_ingredients(self, recipe, items_data):
+        RecipeComponent.objects.bulk_create(
+            RecipeComponent(
+                recipe=recipe,
+                ingredient=item['id'],
+                amount=item['amount'],
+            )
+            for item in items_data
+        )
+
+    def create(self, validated_data):
+        items = validated_data.pop('ingredients')
+        tags_list = validated_data.pop('tags')
+
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_list)
+        self._process_ingredients(recipe, items)
+
+        return recipe
+
+    def update(self, instance, validated_data):
+        items = validated_data.pop('ingredients', None)
+        tags_list = validated_data.pop('tags', None)
+        if 'image' in validated_data:
+            if validated_data['image'] is None or validated_data['image'] == '':
+                if instance.image:
+                    instance.image.delete()
+                validated_data.pop('image')
+        
+        instance = super().update(instance, validated_data)
+
+        if tags_list is not None:
+            instance.tags.set(tags_list)
+
+        if items is not None:
+            instance.components.all().delete()
+            self._process_ingredients(instance, items)
+
+        return instance
 
     def to_representation(self, instance):
         return RecipeOutputSerializer(instance, context=self.context).data
@@ -326,10 +337,17 @@ class RecipeInputSerializer(serializers.ModelSerializer):
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
     """Краткий сериализатор рецепта."""
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+    def get_image(self, obj):
+        """Возвращает URL изображения или пустую строку."""
+        if obj.image and hasattr(obj.image, 'url') and obj.image.name:
+            return obj.image.url
+        return ""
 
 
 class AuthorWithRecipesSerializer(serializers.ModelSerializer):

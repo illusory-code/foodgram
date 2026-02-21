@@ -13,7 +13,7 @@ from recipes.models import Recipe
 def short_link_redirect(request, pk):
     """Редирект с короткой ссылки на страницу рецепта."""
     try:
-        Recipe.objects.get(pk=pk)  # Проверяем существование рецепта
+        Recipe.objects.get(pk=pk)
         return HttpResponseRedirect(f'/recipes/{pk}/')
     except Recipe.DoesNotExist:
         return HttpResponseRedirect('/not-found/')

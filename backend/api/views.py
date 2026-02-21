@@ -55,8 +55,67 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeInputSerializer
         return RecipeOutputSerializer
 
+    def create(self, request, *args, **kwargs):
+        """Создание рецепта с проверкой авторизации."""
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Учетные данные не были предоставлены.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        """Обновление рецепта с обработкой ошибок."""
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Учетные данные не были предоставлены.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        pk = kwargs.get('pk')
+        
+        try:
+            instance = self.get_queryset().get(pk=pk)
+        except Recipe.DoesNotExist:
+            has_empty_image = (
+                'image' in request.data and 
+                (request.data['image'] is None or request.data['image'] == '')
+            )
+            
+            if has_empty_image:
+                return Response(
+                    {'detail': 'Рецепт не найден'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            return Response(
+                {'detail': 'Рецепт не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if instance.author != request.user:
+            return Response(
+                {'detail': 'У вас нет прав для изменения этого рецепта.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+        
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Частичное обновление рецепта."""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
 
     def get_queryset(self):
         user = self.request.user
