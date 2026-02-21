@@ -1,5 +1,6 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from foodgram_backend.constants import (
     COOKING_DURATION_MAX,
     COOKING_DURATION_MIN,
@@ -7,7 +8,6 @@ from foodgram_backend.constants import (
     INGREDIENT_QTY_MIN,
     INGREDIENT_UNIT_MAX_LENGTH,
     LONG_TEXT,
-    TAG_COLOR_MAX_LENGTH,
     TAG_NAME_MAX_LENGTH,
     TAG_SLUG_MAX_LENGTH,
 )
@@ -70,12 +70,6 @@ class Tag(models.Model):
         max_length=TAG_SLUG_MAX_LENGTH,
         verbose_name='Слаг',
         unique=True,
-    )
-    color_code = models.CharField(
-        max_length=TAG_COLOR_MAX_LENGTH,
-        verbose_name='HEX-цвет',
-        default='#49B64E',
-        help_text='Цвет тега для отображения в интерфейсе фронтенда'
     )
 
     class Meta:
@@ -187,7 +181,6 @@ class RecipeComponent(models.Model):
 
 class UserRecipeBase(TimeStampedModel):
     """Абстрактная база для связи пользователь-рецепт."""
-
     user = models.ForeignKey(
         UserAccount,
         on_delete=models.CASCADE,

@@ -2,10 +2,11 @@
 
 import django.db.models.deletion
 import django.utils.timezone
-import users.managers
-import users.validators
 from django.conf import settings
 from django.db import migrations, models
+
+import users.managers
+import users.validators
 
 
 class Migration(migrations.Migration):

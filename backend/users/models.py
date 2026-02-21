@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
+
 from foodgram_backend.constants import LONG_TEXT, MAX_NAME_LENGTH
 from users.managers import AccountManager
 from users.validators import validate_name, validate_nickname

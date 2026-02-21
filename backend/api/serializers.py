@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
 from foodgram_backend.constants import (
     MAX_COOKING_TIME,
     MIN_COOKING_TIME,
@@ -13,7 +15,6 @@ from recipes.models import (
     ShoppingItem,
     Tag,
 )
-from rest_framework import serializers
 from users.models import FollowRelationship
 from users.validators import validate_name, validate_nickname
 
@@ -181,7 +182,7 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения рецепта."""
 
     tags = TagInfoSerializer(many=True, read_only=True)
-    image = Base64ImageField()
+    image = serializers.SerializerMethodField()
     author = UserInfoSerializer(read_only=True)
     ingredients = RecipeIngredientOutputSerializer(
         many=True,
@@ -209,6 +210,12 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
+    def get_image(self, obj):
+        """Возвращает URL изображения или None."""
+        if obj.image and hasattr(obj.image, 'url'):
+            return obj.image.url
+        return ""
+
 
 class RecipeIngredientInputSerializer(serializers.ModelSerializer):
     """Сериализатор для добавления ингредиентов в рецепт."""
@@ -228,7 +235,7 @@ class RecipeInputSerializer(serializers.ModelSerializer):
     """Сериализатор для создания/обновления рецепта."""
 
     ingredients = RecipeIngredientInputSerializer(many=True)
-    image = Base64ImageField()
+    image = Base64ImageField(required=False)
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all(),
@@ -310,11 +317,6 @@ class RecipeInputSerializer(serializers.ModelSerializer):
                     {'ingredients': 'Ингредиенты должны быть уникальны'}
                 )
             seen_ids.add(ing_id)
-
-        if not data.get('image'):
-            raise serializers.ValidationError(
-                {'image': 'Загрузите изображение блюда'}
-            )
 
         return data
 

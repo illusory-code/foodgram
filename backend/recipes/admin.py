@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+
 from recipes.models import (
     FavoriteItem,
     Ingredient,
@@ -73,19 +74,9 @@ class RecipeAdmin(admin.ModelAdmin):
 class TagAdmin(admin.ModelAdmin):
     """Админ-панель тегов."""
 
-    list_display = ('id', 'name', 'color_code', 'slug', 'color_preview')
+    list_display = ('id', 'name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
-
-    @admin.display(description='Цвет')
-    def color_preview(self, obj):
-        """Возвращает цветовой превью тега."""
-        return format_html(
-            '<span style="background: {}; padding: 5px 10px; '
-            'border-radius: 3px; color: white;">{}</span>',
-            obj.color_code,
-            obj.color_code
-        )
 
 
 @admin.register(ShoppingItem)

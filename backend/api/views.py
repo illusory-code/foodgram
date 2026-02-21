@@ -1,6 +1,17 @@
 import io
 import logging
 
+from django.contrib.auth import get_user_model
+from django.db.models import Exists, OuterRef, Sum
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
 from api.filters import IngredientNameFilter, RecipeFilter
 from api.pagination import PaginatedResponse
 from api.permissions import AuthorOrReadOnly
@@ -17,12 +28,6 @@ from api.serializers import (
     UserInfoSerializer,
 )
 from api.utils import generate_shopping_list_text
-from django.contrib.auth import get_user_model
-from django.db.models import Exists, OuterRef, Sum
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
 from recipes.models import (
     FavoriteItem,
     Ingredient,
@@ -31,10 +36,6 @@ from recipes.models import (
     ShoppingItem,
     Tag,
 )
-from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
 from users.models import FollowRelationship
 
 logger = logging.getLogger(__name__)
