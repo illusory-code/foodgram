@@ -214,7 +214,7 @@ class RecipeOutputSerializer(serializers.ModelSerializer):
         """Возвращает URL изображения или None."""
         if obj.image and hasattr(obj.image, 'url'):
             return obj.image.url
-        return ""
+        return ''
 
 
 class RecipeIngredientInputSerializer(serializers.ModelSerializer):
@@ -349,7 +349,7 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
         """Возвращает URL изображения или пустую строку."""
         if obj.image and hasattr(obj.image, 'url') and obj.image.name:
             return obj.image.url
-        return ""
+        return ''
 
 
 class AuthorWithRecipesSerializer(serializers.ModelSerializer):
