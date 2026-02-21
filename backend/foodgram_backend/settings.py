@@ -88,27 +88,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
 # База данных
-# USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() == 'true'
+USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() == 'true'
 
-# if USE_SQLITE:
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if USE_SQLITE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-#             'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
-#             'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
-#             'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-#             'HOST': os.getenv('DB_HOST', 'db'),
-#             'PORT': os.getenv('DB_PORT', '5432'),
-#         }
-#     }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
+            'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'db'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

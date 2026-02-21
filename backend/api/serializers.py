@@ -283,6 +283,14 @@ class RecipeInputSerializer(serializers.ModelSerializer):
                 )
             seen_ids.add(ing_id)
         request = self.context.get('request')
+        if request and request.method == 'PATCH':
+            if 'image' in data:
+                img_value = data['image']
+                if img_value is None or img_value == '':
+                    raise serializers.ValidationError(
+                        {'image': 'Это поле не может быть пустым.'}
+                    )
+
         if request and request.method == 'POST':
             if not data.get('image'):
                 raise serializers.ValidationError(
@@ -314,12 +322,6 @@ class RecipeInputSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         items = validated_data.pop('ingredients', None)
         tags_list = validated_data.pop('tags', None)
-        if 'image' in validated_data:
-            if validated_data['image'] is None or validated_data['image'] == '':
-                if instance.image:
-                    instance.image.delete()
-                validated_data.pop('image')
-        
         instance = super().update(instance, validated_data)
 
         if tags_list is not None:

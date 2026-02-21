@@ -74,17 +74,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'detail': 'Учетные данные не были предоставлены.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
+
         pk = kwargs.get('pk')
-        
+
         try:
             instance = self.get_queryset().get(pk=pk)
         except Recipe.DoesNotExist:
             has_empty_image = (
-                'image' in request.data and 
-                (request.data['image'] is None or request.data['image'] == '')
+                'image' in request.data
+                and request.data['image'] in (None, '')
             )
-            
+
             if has_empty_image:
                 return Response(
                     {'detail': 'Рецепт не найден'},
@@ -101,15 +101,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'detail': 'У вас нет прав для изменения этого рецепта.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=partial
+        )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        
+
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        
+
         return Response(serializer.data)
 
     def partial_update(self, request, *args, **kwargs):
