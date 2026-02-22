@@ -1,10 +1,13 @@
 import os
 
-from django.http import HttpResponseNotFound
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.http import FileResponse, HttpResponseRedirect
+from django.http import (
+    FileResponse,
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+)
 from django.urls import include, path
 from django.views.generic import TemplateView
 
@@ -30,8 +33,8 @@ def serve_openapi_schema(request):
             content_type='application/yaml'
         )
 
-    # Если файл не найден
     return HttpResponseNotFound('Schema file not found')
+
 
 def build_url_patterns():
     """Формирование URL-конфигурации проекта."""
