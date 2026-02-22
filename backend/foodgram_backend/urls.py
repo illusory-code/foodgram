@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import FileResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import include, path
 from django.views.generic import TemplateView
 
@@ -11,12 +12,15 @@ from recipes.models import Recipe
 
 
 def short_link_redirect(request, pk):
-    """Редирект с короткой ссылки на страницу рецепта."""
-    try:
-        Recipe.objects.get(pk=pk)
-        return HttpResponseRedirect(f'/recipes/{pk}/')
-    except Recipe.DoesNotExist:
-        return HttpResponseRedirect('/not-found/')
+    """Редирект с короткой ссылки на страницу рецепта во фронтенде."""
+    recipe = get_object_or_404(Recipe, pk=pk)
+
+    if settings.DEBUG:
+        return HttpResponseRedirect(
+            f'http://localhost:3000/recipes/{recipe.pk}/'
+        )
+
+    return HttpResponseRedirect(f'/recipes/{recipe.pk}/')
 
 
 def serve_openapi_schema(request):
