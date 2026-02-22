@@ -42,7 +42,7 @@ class UserAccountAdmin(BaseUserAdmin):
 
     @admin.display(description='Создано рецептов')
     def recipes_created(self, obj):
-        return obj.created_recipes.count()
+        return obj.recipes.count()
 
 
 @admin.register(FollowRelationship)
