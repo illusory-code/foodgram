@@ -12,14 +12,7 @@ from recipes.models import Recipe
 
 
 def short_link_redirect(request, pk):
-    """Редирект с короткой ссылки на страницу рецепта во фронтенде."""
     recipe = get_object_or_404(Recipe, pk=pk)
-
-    if settings.DEBUG:
-        return HttpResponseRedirect(
-            f'http://localhost:3000/recipes/{recipe.pk}/'
-        )
-
     return HttpResponseRedirect(f'/recipes/{recipe.pk}/')
 
 
